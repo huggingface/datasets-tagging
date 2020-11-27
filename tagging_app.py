@@ -16,97 +16,17 @@ st.beta_set_page_config(
     initial_sidebar_state="auto",
 )
 
-task_set = {
-    "conditional-text-generation": {
-        "description": "data-to-text and text transduction tasks such as translation or summarization",
-        "options": [
-            "machine-translation",
-            "sentence-splitting-fusion",
-            "summarization",
-            "table-to-text",
-            "text-simplification",
-            "explanation-generation",
-            "other",
-        ],
-    },
-    "question-answering": {
-        "description": "question answering tasks",
-        "options": [
-            "open-domain-qa",
-            "closed-domain-qa",
-            "multiple-choice-qa",
-            "extractive-qa",
-            "abstractive-qa",
-            "other",
-        ],
-    },
-    "sequence-modeling": {
-        "description": "such as language modeling or dialogue",
-        "options": [
-            "dialogue-modeling",
-            "language-modeling",
-            "other-multi-turn",
-            "slot-filling",
-            "other",
-        ],
-    },
-    "structure-prediction": {
-        "description": "predicting structural properties of the text, such as syntax",
-        "options": [
-            "coreference-resolution",
-            "named-entity-recognition",
-            "parsing",
-            "other",
-        ],
-    },
-    "text-classification": {
-        "description": "predicting a class index or boolean value",
-        "options": [
-            "acceptability-classification",
-            "entity-linking-classification",
-            "fact-checking",
-            "intent-classification",
-            "multi-class-classification",
-            "multi-label-classification",
-            "natural-language-inference",
-            "semantic-similarity-classification",
-            "sentiment-classification",
-            "topic-classification",
-            "other",
-        ],
-    },
-    "text-retrieval": {
-        "description": "information or text retrieval tasks",
-        "options": [
-            "document-retrieval",
-            "utterance-retrieval",
-            "entity-linking-retrieval",
-            "fact-checking-retrieval",
-            "other",
-        ],
-    },
-    "text-scoring": {
-        "description": "text scoring tasks, predicting a real valued score for some text",
-        "options": [
-            "semantic-similarity-scoring",
-            "sentiment-scoring",
-            "other",
-        ],
-    },
-    "other": {
-        "description": "other task family not mentioned here",
-        "options": [
-            "other",
-        ],
-    },
-}
+task_set = json.load(open("task_set.json"))
+license_set = json.load(open("license_set.json"))
+language_set = json.load(open("language_set.json"))
+language_set_full = json.load(open("language_set_full.json"))
 
 multilinguality_set = {
     "monolingual": "contains a single language",
     "multilingual": "contains multiple languages",
     "translation": "contains translated or aligned text",
     "other": "other type of language distribution",
-}        
+}
 
 creator_set = {
     "language": [
@@ -126,51 +46,7 @@ creator_set = {
     ],
 }
 
-license_set = {
-    'afl-3.0': 'Academic Free License',
-    'apache-2.0': 'Apache license 2.0',
-    'artistic-2.0': 'Artistic license 2.0',
-    'bsl-1.0': 'Boost Software License 1.0',
-    'bsd-2-clause': 'BSD 2-clause "Simplified" license',
-    'bsd-3-clause': 'BSD 3-clause "New" or "Revised" license',
-    'bsd-3-clause-clear': 'BSD 3-clause Clear license',
-    'cc': 'Creative Commons license family',
-    'cc0-1.0': 'Creative Commons Zero v1.0 Universal',
-    'cc-by-sa-3.0': 'Creative Commons Attribution Share Alike 3.0',
-    'cc-by-4.0': 'Creative Commons Attribution 4.0',
-    'cc-by-nc-4.0': 'Creative Commons Attribution Non Commercial 4.0',
-    'cc-by-nc-sa-4.0': 'Creative Commons Attribution Non Commercial Share Alike 4.0',
-    'cc-by-sa-4.0': 'Creative Commons Attribution Share Alike 4.0',
-    'wtfpl': 'Do What The F*ck You Want To Public License',
-    'ecl-2.0': 'Educational Community License v2.0',
-    'epl-1.0': 'Eclipse Public License 1.0',
-    'epl-2.0': 'Eclipse Public License 2.0',
-    'eupl-1.1': 'European Union Public License 1.1',
-    'agpl-3.0': 'GNU Affero General Public License v3.0',
-    'gpl': 'GNU General Public License family',
-    'gpl-2.0': 'GNU General Public License v2.0',
-    'gpl-3.0': 'GNU General Public License v3.0',
-    'lgpl': 'GNU Lesser General Public License family',
-    'lgpl-2.1': 'GNU Lesser General Public License v2.1',
-    'lgpl-3.0': 'GNU Lesser General Public License v3.0',
-    'isc': 'ISC',
-    'lppl-1.3c': 'LaTeX Project Public License v1.3c',
-    'ms-pl': 'Microsoft Public License',
-    'mit': 'MIT',
-    'mpl-2.0': 'Mozilla Public License 2.0',
-    'osl-3.0': 'Open Software License 3.0',
-    'postgresql': 'PostgreSQL License',
-    'ofl-1.1': 'SIL Open Font License 1.1',
-    'ncsa': 'University of Illinois/NCSA Open Source License',
-    'unlicense': 'The Unlicense',
-    'zlib': 'zLib License',
-    'other': 'other license',
-    'unknown': 'could not find license information',
-}
 
-tag_set = json.load(open('tag_set.json'))
-language_set = dict([(k, v.replace(', dialect unknown', ''))
-                     for k, v in tag_set['language']["BCP-47"].items()])
 
 ########################
 ## Helper functions
@@ -205,7 +81,7 @@ def filter_features(feature_dict):
         return {
             "feature_type": feature_dict["_type"],
             "dtype": "string",
-            "languages": feature_dict["languages"],            
+            "languages": feature_dict["languages"],
         }
     else:
         return dict([(k, filter_features(v)) for k, v in feature_dict.items()])
@@ -271,12 +147,12 @@ st.sidebar.markdown(
 )
 
 app_desc = """
-### Dataset Tagger  
+### Dataset Tagger
 
-This app aims to make it easier to add structured tags to the datasets present in the library.  
+This app aims to make it easier to add structured tags to the datasets present in the library.
 
 Each configuration requires its own tasks, as these often correspond to distinct sub-tasks. However, we provide the opportunity
-to pre-load the tag sets from another dataset or configuration to avoid too much redundancy.  
+to pre-load the tag sets from another dataset or configuration to avoid too much redundancy.
 
 The tag sets are saved in JSON format, but you can print a YAML version in the right-most column to copy-paste to the config README.md
 """
@@ -390,13 +266,13 @@ with c2.beta_expander("- Choose tag set to pre-load"):
 
 pre_loaded["languages"] = list(set(pre_loaded["languages"] + find_languages(features)))
 if config_infos["license"] in license_set:
-    pre_loaded["licenses"] = list(set(pre_loaded["licenses"] + [config_infos["license"]]))        
+    pre_loaded["licenses"] = list(set(pre_loaded["licenses"] + [config_infos["license"]]))
 
 ##########
 # Modify or add new tags
 ##########
 c2.markdown("#### Editing the tag set")
-c2.markdown("> *Expand the following boxes to edit the tag set. For each of the questions, choose all that apply, at least one option:*")        
+c2.markdown("> *Expand the following boxes to edit the tag set. For each of the questions, choose all that apply, at least one option:*")
 
 with c2.beta_expander("- Supported tasks"):
     task_categories = st.multiselect(
@@ -414,13 +290,13 @@ with c2.beta_expander("- Supported tasks"):
         )
         if "other" in task_specs:
             other_task = st.text_input(
-                "You selected 'other' task. Please enter a short hyphen-separated description for the task:", 
+                "You selected 'other' task. Please enter a short hyphen-separated description for the task:",
                 value='my-task-description',
             )
             st.write(f"Registering {tg}-other-{other_task} task")
             task_specs[task_specs.index("other")] = f"{tg}-other-{other_task}"
         task_specifics += task_specs
-        
+
 with c2.beta_expander("- Languages"):
     multilinguality = st.multiselect(
         "Does the dataset contain more than one language?",
@@ -430,7 +306,7 @@ with c2.beta_expander("- Languages"):
     )
     if "other" in multilinguality:
         other_multilinguality = st.text_input(
-            "You selected 'other' type of multilinguality. Please enter a short hyphen-separated description:", 
+            "You selected 'other' type of multilinguality. Please enter a short hyphen-separated description:",
             value='my-multilinguality',
         )
         st.write(f"Registering other-{other_multilinguality} multilinguality")
@@ -461,7 +337,7 @@ with c2.beta_expander("- Dataset creators"):
     )
     if "other" in licenses:
         other_license = st.text_input(
-            "You selected 'other' type of license. Please enter a short hyphen-separated description:", 
+            "You selected 'other' type of license. Please enter a short hyphen-separated description:",
             value='my-license',
         )
         st.write(f"Registering other-{other_license} license")
@@ -487,13 +363,13 @@ with c2.beta_expander("- Dataset creators"):
         )
         if "other" in extended_sources:
             other_extended_sources = st.text_input(
-                "You selected 'other' dataset. Please enter a short hyphen-separated description:", 
+                "You selected 'other' dataset. Please enter a short hyphen-separated description:",
                 value='my-dataset',
             )
             st.write(f"Registering other-{other_extended_sources} dataset")
             extended_sources[extended_sources.index("other")] = f"other-{other_extended_sources}"
         source_datasets += [f"extended|{src}" for src in extended_sources]
-        
+
 num_examples = (
     sum([dct.get('num_examples', 0) for spl, dct in config_infos['splits'].items()])
     if config_infos.get('splits', None) is not None
@@ -511,7 +387,7 @@ elif num_examples < 1000000:
     size_cat = "100K<n<1M"
 else:
     size_cat = "n>1M"
-    
+
 res = {
     "task_categories": task_categories,
     "task_ids": task_specifics,
@@ -535,7 +411,7 @@ if c3.button("Done? Save to File!"):
     if not os.path.isdir(pjoin('saved_tags', dataset_id, config_id)):
         _ = os.mkdir(pjoin('saved_tags', dataset_id, config_id))
     json.dump(res, open(pjoin('saved_tags', dataset_id, config_id, 'tags.json'), 'w'))
-    
+
 with c3.beta_expander("Show JSON output"):
     st.write(res)
 
@@ -546,4 +422,3 @@ c3.markdown("---  ")
 
 with c3.beta_expander("----> show full task set <----", expanded=True):
     st.write(task_set)
-
