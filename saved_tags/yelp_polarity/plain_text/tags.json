@@ -1,0 +1,1 @@
+{"task_categories": ["text-classification"], "task_ids": ["sentiment-classification"], "multilinguality": ["monolingual"], "languages": ["en"], "language_creators": ["found"], "annotations_creators": ["found"], "source_datasets": ["original"], "size_categories": ["100K<n<1M"], "licenses": ["other-yelp-terms-of-use"]}

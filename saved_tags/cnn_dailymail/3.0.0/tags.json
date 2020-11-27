@@ -1,0 +1,1 @@
+{"task_categories": ["conditional-text-generation"], "task_ids": ["summarization"], "multilinguality": ["monolingual"], "languages": ["en"], "language_creators": ["found"], "annotations_creators": ["found"], "source_datasets": ["original"], "size_categories": ["100K<n<1M"], "licenses": ["unknown"]}

@@ -1,0 +1,1 @@
+{"task_categories": ["question-answering"], "task_ids": ["extractive-qa"], "multilinguality": ["monolingual"], "languages": ["vi"], "language_creators": ["found"], "annotations_creators": ["expert-generated"], "source_datasets": ["extended|squad"], "size_categories": ["1K<n<10K"], "licenses": ["cc-by-sa-4.0"]}

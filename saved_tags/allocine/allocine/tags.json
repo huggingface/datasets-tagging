@@ -1,0 +1,1 @@
+{"task_categories": ["text-classification"], "task_ids": ["sentiment-classification"], "multilinguality": ["monolingual"], "languages": ["fr"], "language_creators": ["found"], "annotations_creators": ["no-annotation"], "source_datasets": ["original"], "size_categories": ["100K<n<1M"], "licenses": ["mit"]}

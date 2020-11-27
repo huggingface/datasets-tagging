@@ -1,0 +1,1 @@
+{"task_categories": ["text-classification", "text-to-text"], "task_ids": ["natural-language-inference", "text-to-text-other-generate-explanation"], "multilinguality": ["monolingual"], "languages": ["en"], "language_creators": ["crowdsourced"], "annotations_creators": ["crowdsourced"], "source_datasets": ["original"], "size_categories": ["100K<n<1M"], "licenses": ["cc-by-nc-4.0"]}
