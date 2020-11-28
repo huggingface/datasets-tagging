@@ -185,8 +185,16 @@ if dataset_id == "local dataset":
             all_info_dicts[conf] = conf_info_dict
         dataset_id = list(dataset_infos.values())[0]["builder_name"]
     else:
-        dataset_id = dataset_choose_list[1]
-        all_info_dicts = all_dataset_infos[dataset_id]
+        dataset_id = "tmp_dir"
+        all_info_dicts = {
+            "default":{
+                'description': "",
+                'features': {},
+                'homepage': "",
+                'license': "",
+                'splits': {},
+            }
+        }
 else:
     all_info_dicts = all_dataset_infos[dataset_id]
 
