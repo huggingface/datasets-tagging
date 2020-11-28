@@ -9,7 +9,7 @@ from dataclasses import asdict
 from glob import glob
 from os.path import join as pjoin
 
-st.beta_set_page_config(
+st.set_page_config(
     page_title="HF Dataset Tagging App",
     page_icon="https://huggingface.co/front/assets/huggingface_logo.svg",
     layout="wide",
@@ -18,8 +18,8 @@ st.beta_set_page_config(
 
 task_set = json.load(open("task_set.json"))
 license_set = json.load(open("license_set.json"))
-language_set = json.load(open("language_set.json"))
-language_set_full = json.load(open("language_set_full.json"))
+language_set_restricted = json.load(open("language_set.json"))
+language_set = json.load(open("language_set_full.json"))
 
 multilinguality_set = {
     "monolingual": "contains a single language",
@@ -46,15 +46,12 @@ creator_set = {
     ],
 }
 
-
-
 ########################
 ## Helper functions
 ########################
 
 @st.cache
 def filter_features(feature_dict):
-    print(feature_dict)
     if feature_dict.get("_type", None) == 'Value':
         return {
             "feature_type": feature_dict["_type"],
@@ -96,9 +93,10 @@ def find_languages(feature_dict):
     else:
         return []
 
+keep_keys = ['description', 'features', 'homepage', 'license', 'splits']
+
 @st.cache
 def get_info_dicts(dataset_id):
-    keep_keys = ['description', 'features', 'homepage', 'license', 'splits']
     module_path = datasets.load.prepare_module(dataset_id, dataset=True)
     builder_cls = datasets.load.import_main_class(module_path[0], dataset=True)
     build_confs = builder_cls.BUILDER_CONFIGS
@@ -112,9 +110,7 @@ def get_info_dicts(dataset_id):
 
 @st.cache
 def get_dataset_list():
-    dataset_list = datasets.list_datasets()
-    all_dataset_ids = ["other"] + dataset_list
-    return all_dataset_ids
+    return datasets.list_datasets()
 
 @st.cache()
 def load_all_dataset_infos(dataset_list):
@@ -159,7 +155,7 @@ The tag sets are saved in JSON format, but you can print a YAML version in the r
 
 all_dataset_ids = copy.deepcopy(get_dataset_list())
 existing_tag_sets = load_existing_tags()
-all_dataset_infos = load_all_dataset_infos(all_dataset_ids[1:])
+all_dataset_infos = load_all_dataset_infos(all_dataset_ids)
 
 st.sidebar.markdown(app_desc)
 
@@ -167,10 +163,10 @@ st.sidebar.markdown(app_desc)
 only_missing = st.sidebar.checkbox("Show only un-annotated configs")
 
 if only_missing:
-    dataset_choose_list = [did for did, c_dict in all_dataset_infos.items()
+    dataset_choose_list = ["local dataset"] + [did for did, c_dict in all_dataset_infos.items()
                                if not all([cid in existing_tag_sets.get(did, {}) for cid in c_dict])]
 else:
-    dataset_choose_list = list(all_dataset_infos.keys())
+    dataset_choose_list = ["local dataset"] + list(all_dataset_infos.keys())
 
 dataset_id = st.sidebar.selectbox(
     label="Choose dataset to tag",
@@ -178,7 +174,21 @@ dataset_id = st.sidebar.selectbox(
     index=0,
 )
 
-all_info_dicts = all_dataset_infos[dataset_id]
+if dataset_id == "local dataset":
+    path_to_info = st.sidebar.text_input("Please enter the path to the folder where the dataset_infos.json file was generated", "/path/to/dataset/")
+    if path_to_info != "/path/to/dataset/":
+        dataset_infos = json.load(open(pjoin(path_to_info, "dataset_infos.json")))
+        confs = dataset_infos.keys()
+        all_info_dicts = {}
+        for conf, info in dataset_infos.items():
+            conf_info_dict = dict([(k, info[k]) for k in keep_keys])
+            all_info_dicts[conf] = conf_info_dict
+        dataset_id = list(dataset_infos.values())[0]["builder_name"]
+    else:
+        dataset_id = dataset_choose_list[1]
+        all_info_dicts = all_dataset_infos[dataset_id]
+else:
+    all_info_dicts = all_dataset_infos[dataset_id]
 
 if only_missing:
     config_choose_list = [cid for cid in all_info_dicts
@@ -412,11 +422,26 @@ if c3.button("Done? Save to File!"):
         _ = os.mkdir(pjoin('saved_tags', dataset_id, config_id))
     json.dump(res, open(pjoin('saved_tags', dataset_id, config_id, 'tags.json'), 'w'))
 
-with c3.beta_expander("Show JSON output"):
+with c3.beta_expander("Show JSON output for the current config"):
     st.write(res)
 
-with c3.beta_expander("Show YAML output"):
-    st.text(yaml.dump(res))
+with c3.beta_expander("Show YAML output aggregating the tags saved for all configs"):
+    task_saved_configs = dict([
+        (fname.split('/')[-2], json.load(open(fname)))
+        for fname in glob(f"saved_tags/{dataset_id}/*/tags.json")
+    ])
+    aggregate_config = {}
+    for conf_name, saved_tags in task_saved_configs.items():
+        for tag_k, tag_ls in saved_tags.items():
+            aggregate_config[tag_k] = aggregate_config.get(tag_k, {})
+            aggregate_config[tag_k][conf_name] = tuple(sorted(tag_ls))
+    for tag_k in aggregate_config:
+        if len(set(aggregate_config[tag_k].values())) == 1:
+            aggregate_config[tag_k] = list(list(set(aggregate_config[tag_k].values()))[0])
+        else:
+            for conf_name in aggregate_config[tag_k]:
+                aggregate_config[tag_k][conf_name] = list(aggregate_config[tag_k][conf_name])
+    st.text(yaml.dump(aggregate_config))
 
 c3.markdown("---  ")
 
