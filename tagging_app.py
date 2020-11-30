@@ -63,6 +63,12 @@ def filter_features(feature_dict):
                 "feature_type": feature_dict["_type"],
                 "feature": filter_features(feature_dict["feature"]),
             }
+        elif "_type" in feature_dict["feature"] and feature_dict["feature"]["_type"] == "ClassLabel":
+            return {
+                "feature_type": feature_dict["_type"],
+                "dtype": "int32",
+                "feature": filter_features(feature_dict["feature"]),
+            }
         else:
             return dict(
                 [("feature_type", feature_dict["_type"])] + \
@@ -82,6 +88,7 @@ def filter_features(feature_dict):
         }
     else:
         return dict([(k, filter_features(v)) for k, v in feature_dict.items()])
+
 
 @st.cache
 def find_languages(feature_dict):
@@ -176,7 +183,7 @@ dataset_id = st.sidebar.selectbox(
 
 if dataset_id == "local dataset":
     path_to_info = st.sidebar.text_input("Please enter the path to the folder where the dataset_infos.json file was generated", "/path/to/dataset/")
-    if path_to_info != "/path/to/dataset/":
+    if path_to_info not in ["/path/to/dataset/", ""]:
         dataset_infos = json.load(open(pjoin(path_to_info, "dataset_infos.json")))
         confs = dataset_infos.keys()
         all_info_dicts = {}
