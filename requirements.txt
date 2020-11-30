@@ -1,0 +1,3 @@
+pyyaml
+datasets
+streamlit
