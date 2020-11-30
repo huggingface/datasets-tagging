@@ -102,7 +102,7 @@ def find_languages(feature_dict):
 
 keep_keys = ['description', 'features', 'homepage', 'license', 'splits']
 
-@st.cache
+@st.cache(show_spinner=False)
 def get_info_dicts(dataset_id):
     module_path = datasets.load.prepare_module(dataset_id, dataset=True)
     builder_cls = datasets.load.import_main_class(module_path[0], dataset=True)
@@ -119,7 +119,7 @@ def get_info_dicts(dataset_id):
 def get_dataset_list():
     return datasets.list_datasets()
 
-@st.cache()
+@st.cache(show_spinner=False)
 def load_all_dataset_infos(dataset_list):
     dataset_infos = {}
     for did in dataset_list:
