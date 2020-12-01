@@ -388,7 +388,7 @@ with c2.beta_expander("- Dataset creators"):
         pre_select_ext_b = [p.split('|')[1] for p in pre_loaded["source_datasets"] if p.startswith("extended")]
         extended_sources = st.multiselect(
             "Which other datasets does this one use data from?",
-            options=all_dataset_ids + "other",
+            options=all_dataset_ids + ["other"],
             default=pre_select_ext_b,
         )
         if "other" in extended_sources:
