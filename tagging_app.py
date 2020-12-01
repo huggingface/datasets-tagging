@@ -175,7 +175,6 @@ st.sidebar.markdown(app_desc)
 # option to only select from datasets that still need to be annotated
 only_missing = st.sidebar.checkbox("Show only un-annotated configs")
 
-
 if only_missing:
     dataset_choose_list = ["local dataset"] + [did for did, c_dict in all_dataset_infos.items()
                                if not all([cid in existing_tag_sets.get(did, {}) for cid in c_dict])]
@@ -191,7 +190,7 @@ dataset_id = st.sidebar.selectbox(
 all_info_dicts = {}
 if dataset_id == "local dataset":
     path_to_info = st.sidebar.text_input("Please enter the path to the folder where the dataset_infos.json file was generated", "/path/to/dataset/")
-    if path_to_info != "/path/to/dataset/":
+    if path_to_info not in ["/path/to/dataset/", ""]:
         dataset_infos = json.load(open(pjoin(path_to_info, "dataset_infos.json")))
         confs = dataset_infos.keys()
         all_info_dicts = {}
@@ -210,6 +209,8 @@ if dataset_id == "local dataset":
                 'splits': {},
             }
         }
+else:
+    all_info_dicts = all_dataset_infos[dataset_id]
 
 if only_missing:
     config_choose_list = [cid for cid in all_info_dicts
