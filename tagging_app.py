@@ -3,11 +3,17 @@ import datasets
 import json
 import os
 import streamlit as st
+import sys
 import yaml
-
 from dataclasses import asdict
+from pathlib import Path
+from typing import Dict
+
 from glob import glob
 from os.path import join as pjoin
+
+
+load_remote_datasets = "--load_remote_datasets" in sys.argv[1:]
 
 st.set_page_config(
     page_title="HF Dataset Tagging App",
@@ -132,7 +138,7 @@ def load_all_dataset_infos(dataset_list):
 def load_existing_tags():
     has_tags = {}
     for fname in glob("saved_tags/*/*/tags.json"):
-        _, did, cid, _ = fname.split('/')
+        _, did, cid, _ = fname.split(os.sep)
         has_tags[did] = has_tags.get(did, {})
         has_tags[did][cid] = fname
     return has_tags
@@ -160,9 +166,9 @@ to pre-load the tag sets from another dataset or configuration to avoid too much
 The tag sets are saved in JSON format, but you can print a YAML version in the right-most column to copy-paste to the config README.md
 """
 
-all_dataset_ids = copy.deepcopy(get_dataset_list())
 existing_tag_sets = load_existing_tags()
-all_dataset_infos = load_all_dataset_infos(all_dataset_ids)
+all_dataset_ids = list(existing_tag_sets.keys()) if not load_remote_datasets else copy.deepcopy(get_dataset_list())
+all_dataset_infos = {} if not load_remote_datasets else load_all_dataset_infos(all_dataset_ids)
 
 st.sidebar.markdown(app_desc)
 
@@ -181,6 +187,7 @@ dataset_id = st.sidebar.selectbox(
     index=0,
 )
 
+all_info_dicts = {}
 if dataset_id == "local dataset":
     path_to_info = st.sidebar.text_input("Please enter the path to the folder where the dataset_infos.json file was generated", "/path/to/dataset/")
     if path_to_info not in ["/path/to/dataset/", ""]:
@@ -248,8 +255,6 @@ c2.markdown(f"### Writing tags for: {dataset_id} / {config_id}")
 # Pre-load information to speed things up
 ##########
 c2.markdown("#### Pre-loading an existing tag set")
-
-existing_tag_sets = load_existing_tags()
 
 pre_loaded = {
     "task_categories": [],
@@ -442,7 +447,7 @@ with c3.beta_expander("Show JSON output for the current config"):
 
 with c3.beta_expander("Show YAML output aggregating the tags saved for all configs"):
     task_saved_configs = dict([
-        (fname.split('/')[-2], json.load(open(fname)))
+        (Path(fname).parent.name, json.load(open(fname)))
         for fname in glob(f"saved_tags/{dataset_id}/*/tags.json")
     ])
     aggregate_config = {}
