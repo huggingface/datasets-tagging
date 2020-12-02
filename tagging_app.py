@@ -57,45 +57,45 @@ creator_set = {
 ########################
 
 @st.cache
-def filter_features(feature_dict):
-    if isinstance(feature_dict, list):
-        return dict([(k, filter_features(v)) for k, v in feature_dict[0].items()])
-    elif feature_dict.get("_type", None) == 'Value':
+def filter_features(features):
+    if isinstance(features, list):
+        return dict([(k, filter_features(v)) for k, v in features[0].items()])
+    elif features.get("_type", None) == 'Value':
         return {
-            "feature_type": feature_dict["_type"],
-            "dtype": feature_dict["dtype"],
+            "feature_type": features["_type"],
+            "dtype": features["dtype"],
         }
-    elif feature_dict.get("_type", None) == 'Sequence':
-        if "dtype" in feature_dict["feature"]:
+    elif features.get("_type", None) == 'Sequence':
+        if "dtype" in features["feature"]:
             return {
-                "feature_type": feature_dict["_type"],
-                "feature": filter_features(feature_dict["feature"]),
+                "feature_type": features["_type"],
+                "feature": filter_features(features["feature"]),
             }
-        elif "_type" in feature_dict["feature"] and feature_dict["feature"]["_type"] == "ClassLabel":
+        elif "_type" in features["feature"] and features["feature"]["_type"] == "ClassLabel":
             return {
-                "feature_type": feature_dict["_type"],
+                "feature_type": features["_type"],
                 "dtype": "int32",
-                "feature": filter_features(feature_dict["feature"]),
+                "feature": filter_features(features["feature"]),
             }
         else:
             return dict(
-                [("feature_type", feature_dict["_type"])] + \
-                [(k, filter_features(v)) for k, v in feature_dict["feature"].items()]
+                [("feature_type", features["_type"])] + \
+                [(k, filter_features(v)) for k, v in features["feature"].items()]
             )
-    elif feature_dict.get("_type", None) == 'ClassLabel':
+    elif features.get("_type", None) == 'ClassLabel':
         return {
-            "feature_type": feature_dict["_type"],
+            "feature_type": features["_type"],
             "dtype": "int32",
-            "class_names": feature_dict["names"],
+            "class_names": features["names"],
         }
-    elif feature_dict.get("_type", None) in ['Translation', 'TranslationVariableLanguages']:
+    elif features.get("_type", None) in ['Translation', 'TranslationVariableLanguages']:
         return {
-            "feature_type": feature_dict["_type"],
+            "feature_type": features["_type"],
             "dtype": "string",
-            "languages": feature_dict["languages"],
+            "languages": features["languages"],
         }
     else:
-        return dict([(k, filter_features(v)) for k, v in feature_dict.items()])
+        return dict([(k, filter_features(v)) for k, v in features.items()])
 
 
 @st.cache
