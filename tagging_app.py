@@ -58,7 +58,9 @@ creator_set = {
 
 @st.cache
 def filter_features(feature_dict):
-    if feature_dict.get("_type", None) == 'Value':
+    if isinstance(feature_dict, list):
+        return dict([(k, filter_features(v)) for k, v in feature_dict[0].items()])
+    elif feature_dict.get("_type", None) == 'Value':
         return {
             "feature_type": feature_dict["_type"],
             "dtype": feature_dict["dtype"],
