@@ -57,45 +57,68 @@ creator_set = {
 ########################
 
 @st.cache
-def filter_features(features):
+def filter_features(features, name="", is_sequence=False):
     if isinstance(features, list):
-        return dict([(k, filter_features(v)) for k, v in features[0].items()])
+        return filter_features(features[0], name, is_sequence=True)
+    elif features.get("_type", None) == 'Sequence':
+        if "dtype" in features["feature"] or ("_type" in features["feature"] and features["feature"]["_type"] == "ClassLabel"):
+            pre_filtered, desc = filter_features(features["feature"], name, is_sequence=True)
+            filtered = {
+                "feature_type": features["_type"],
+                "feature": pre_filtered,
+            }
+            return filtered, desc
+        else:
+            filtered = {"feature_type": features["_type"]}
+            if is_sequence:
+                desc = [f"- `{name}`: a `list` of dictionary features containing:"]
+            else:
+                desc = [f"- `{name}`: a dictionary feature containing:"]
+            for k, v in features["feature"].items():
+                pre_filtered, pre_desc = filter_features(v, name=k)
+                filtered[k] = pre_filtered
+                desc += ["  " + d for d in pre_desc]
+            return filtered, desc
     elif features.get("_type", None) == 'Value':
-        return {
+        filtered = {
             "feature_type": features["_type"],
             "dtype": features["dtype"],
         }
-    elif features.get("_type", None) == 'Sequence':
-        if "dtype" in features["feature"]:
-            return {
-                "feature_type": features["_type"],
-                "feature": filter_features(features["feature"]),
-            }
-        elif "_type" in features["feature"] and features["feature"]["_type"] == "ClassLabel":
-            return {
-                "feature_type": features["_type"],
-                "dtype": "int32",
-                "feature": filter_features(features["feature"]),
-            }
+        if is_sequence:
+            desc = f"- `{name}`: a `list` of `{features['dtype']}` features."
         else:
-            return dict(
-                [("feature_type", features["_type"])] + \
-                [(k, filter_features(v)) for k, v in features["feature"].items()]
-            )
+            desc = f"- `{name}`: a `{features['dtype']}` feature."
+        return filtered, [desc]
     elif features.get("_type", None) == 'ClassLabel':
-        return {
+        filtered = {
             "feature_type": features["_type"],
             "dtype": "int32",
             "class_names": features["names"],
         }
+        if is_sequence:
+            desc = f"- `{name}`: a `list` of classification labels, with possible values including {', '.join(['`'+nm+'`' for nm in features['names'][:5]])}."
+        else:
+            desc = f"- `{name}`: a classification label, with possible values including {', '.join(['`'+nm+'`' for nm in features['names'][:5]])}."
+        return filtered, [desc]
     elif features.get("_type", None) in ['Translation', 'TranslationVariableLanguages']:
-        return {
+        filtered = {
             "feature_type": features["_type"],
             "dtype": "string",
             "languages": features["languages"],
         }
+        if is_sequence:
+            desc = f"- `{name}`: a `list` of multilingual `string` variables, with possible languages including {', '.join(['`'+nm+'`' for nm in features['languages'][:5]])}."
+        else:
+            desc = f"- `{name}`: a multilingual `string` variable, with possible languages including {', '.join(['`'+nm+'`' for nm in features['languages'][:5]])}."
+        return filtered, [desc]
     else:
-        return dict([(k, filter_features(v)) for k, v in features.items()])
+        filtered = {}
+        desc = []
+        for k, v in features.items():
+            pre_filtered, pre_desc = filter_features(v, name=k)
+            filtered[k] = pre_filtered
+            desc += pre_desc
+        return filtered, desc
 
 
 @st.cache
@@ -227,7 +250,7 @@ config_id = st.sidebar.selectbox(
 
 config_infos = all_info_dicts[config_id]
 
-c1, _, c2, _, c3 = st.beta_columns([8, 1, 14, 1, 10])
+c1, _, c2, _, c3 = st.beta_columns([8, 1, 12, 1, 12])
 
 ########################
 ## Dataset description
@@ -243,8 +266,8 @@ with c1.beta_expander("Dataset description:", expanded=True):
     st.markdown(config_infos['description'])
 
 # "pretty-fy" the features to be a little easier to read
-features = filter_features(config_infos['features'])
-with c1.beta_expander(f"Dataset features for config: {config_id}", expanded=True):
+features, feature_descs = filter_features(config_infos['features'])
+with c1.beta_expander(f"Dataset features for config: {config_id}", expanded=False):
     st.write(features)
 
 ########################
@@ -444,9 +467,6 @@ if c3.button("Done? Save to File!"):
         _ = os.mkdir(pjoin('saved_tags', dataset_id, config_id))
     json.dump(res, open(pjoin('saved_tags', dataset_id, config_id, 'tags.json'), 'w'))
 
-with c3.beta_expander("Show JSON output for the current config"):
-    st.write(res)
-
 with c3.beta_expander("Show YAML output aggregating the tags saved for all configs"):
     task_saved_configs = dict([
         (Path(fname).parent.name, json.load(open(fname)))
@@ -464,6 +484,12 @@ with c3.beta_expander("Show YAML output aggregating the tags saved for all confi
             for conf_name in aggregate_config[tag_k]:
                 aggregate_config[tag_k][conf_name] = list(aggregate_config[tag_k][conf_name])
     st.text(yaml.dump(aggregate_config))
+
+with c3.beta_expander(f"Show Markdown Data Features for config: {config_id}"):
+    st.text('\n'.join(feature_descs))
+
+with c3.beta_expander("Show JSON output for the current config"):
+    st.write(res)
 
 c3.markdown("---  ")
 
