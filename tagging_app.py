@@ -120,7 +120,6 @@ def filter_features(features, name="", is_sequence=False):
             desc += pre_desc
         return filtered, desc
 
-
 @st.cache
 def find_languages(feature_dict):
     if type(feature_dict) in [dict, datasets.features.Features]:
@@ -198,50 +197,30 @@ all_dataset_infos = {} if not load_remote_datasets else load_all_dataset_infos(a
 st.sidebar.markdown(app_desc)
 
 # option to only select from datasets that still need to be annotated
-only_missing = st.sidebar.checkbox("Show only un-annotated configs")
-
-if only_missing:
-    dataset_choose_list = ["local dataset"] + [did for did, c_dict in all_dataset_infos.items()
-                               if not all([cid in existing_tag_sets.get(did, {}) for cid in c_dict])]
-else:
-    dataset_choose_list = ["local dataset"] + list(all_dataset_infos.keys())
-
-dataset_id = st.sidebar.selectbox(
-    label="Choose dataset to tag",
-    options=dataset_choose_list,
-    index=0,
-)
-
 all_info_dicts = {}
-if dataset_id == "local dataset":
-    path_to_info = st.sidebar.text_input("Please enter the path to the folder where the dataset_infos.json file was generated", "/path/to/dataset/")
-    if path_to_info not in ["/path/to/dataset/", ""]:
-        dataset_infos = json.load(open(pjoin(path_to_info, "dataset_infos.json")))
-        confs = dataset_infos.keys()
-        all_info_dicts = {}
-        for conf, info in dataset_infos.items():
-            conf_info_dict = dict([(k, info[k]) for k in keep_keys])
-            all_info_dicts[conf] = conf_info_dict
-        dataset_id = list(dataset_infos.values())[0]["builder_name"]
-    else:
-        dataset_id = "tmp_dir"
-        all_info_dicts = {
-            "default":{
-                'description': "",
-                'features': {},
-                'homepage': "",
-                'license': "",
-                'splits': {},
-            }
+path_to_info = st.sidebar.text_input("Please enter the path to the folder where the dataset_infos.json file was generated", "/path/to/dataset/")
+if path_to_info not in ["/path/to/dataset/", ""]:
+    dataset_infos = json.load(open(pjoin(path_to_info, "dataset_infos.json")))
+    confs = dataset_infos.keys()
+    all_info_dicts = {}
+    for conf, info in dataset_infos.items():
+        conf_info_dict = dict([(k, info[k]) for k in keep_keys])
+        all_info_dicts[conf] = conf_info_dict
+    dataset_id = list(dataset_infos.values())[0]["builder_name"]
+else:
+    dataset_id = "tmp_dir"
+    all_info_dicts = {
+        "default":{
+            'description': "",
+            'features': {},
+            'homepage': "",
+            'license': "",
+            'splits': {},
         }
-else:
-    all_info_dicts = all_dataset_infos[dataset_id]
+    }
 
-if only_missing:
-    config_choose_list = [cid for cid in all_info_dicts
-                              if not cid in existing_tag_sets.get(dataset_id, {})]
-else:
-    config_choose_list = list(all_info_dicts.keys())
+
+config_choose_list = list(all_info_dicts.keys())
 
 config_id = st.sidebar.selectbox(
     label="Choose configuration",
@@ -257,9 +236,7 @@ c1, _, c2, _, c3 = st.beta_columns([8, 1, 12, 1, 12])
 ########################
 
 data_desc = f"### Dataset: {dataset_id} | Configuration: {config_id}" + "\n"
-data_desc += f"[Homepage]({config_infos['homepage']})" + " | "
-data_desc += f"[Data script](https://github.com/huggingface/datasets/blob/master/datasets/{dataset_id}/{dataset_id}.py)" + " | "
-data_desc += f"[View examples](https://huggingface.co/nlp/viewer/?dataset={dataset_id}&config={config_id})"
+data_desc += f"[Homepage]({config_infos['homepage']})"
 c1.markdown(data_desc)
 
 with c1.beta_expander("Dataset description:", expanded=True):
@@ -329,7 +306,7 @@ if config_infos["license"] in license_set:
 c2.markdown("#### Editing the tag set")
 c2.markdown("> *Expand the following boxes to edit the tag set. For each of the questions, choose all that apply, at least one option:*")
 
-with c2.beta_expander("- Supported tasks"):
+with c2.beta_expander("- Supported tasks", expanded=True):
     task_categories = st.multiselect(
         "What categories of task does the dataset support?",
         options=list(task_set.keys()),
@@ -352,7 +329,7 @@ with c2.beta_expander("- Supported tasks"):
             task_specs[task_specs.index("other")] = f"{tg}-other-{other_task}"
         task_specifics += task_specs
 
-with c2.beta_expander("- Languages"):
+with c2.beta_expander("- Languages", expanded=True):
     multilinguality = st.multiselect(
         "Does the dataset contain more than one language?",
         options=list(multilinguality_set.keys()),
@@ -373,7 +350,7 @@ with c2.beta_expander("- Languages"):
         format_func= lambda m: f"{m} : {language_set[m]}",
     )
 
-with c2.beta_expander("- Dataset creators"):
+with c2.beta_expander("- Dataset creators", expanded=True):
     language_creators = st.multiselect(
         "Where does the text in the dataset come from?",
         options=creator_set["language"],
