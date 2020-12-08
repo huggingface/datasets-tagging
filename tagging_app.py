@@ -444,7 +444,7 @@ if c3.button("Done? Save to File!"):
         _ = os.mkdir(pjoin('saved_tags', dataset_id, config_id))
     json.dump(res, open(pjoin('saved_tags', dataset_id, config_id, 'tags.json'), 'w'))
 
-with c3.beta_expander("Show YAML output aggregating the tags saved for all configs"):
+with c3.beta_expander("Show YAML output aggregating the tags saved for all configs", expanded=False):
     task_saved_configs = dict([
         (Path(fname).parent.name, json.load(open(fname)))
         for fname in glob(f"saved_tags/{dataset_id}/*/tags.json")
@@ -460,9 +460,9 @@ with c3.beta_expander("Show YAML output aggregating the tags saved for all confi
         else:
             for conf_name in aggregate_config[tag_k]:
                 aggregate_config[tag_k][conf_name] = list(aggregate_config[tag_k][conf_name])
-    st.text(yaml.dump(aggregate_config))
+    st.text('---\n' + yaml.dump(aggregate_config) + '---')
 
-with c3.beta_expander(f"Show Markdown Data Features for config: {config_id}"):
+with c3.beta_expander(f"Show Markdown Data Fields for config: {config_id}", expanded=True):
     st.text('\n'.join(feature_descs))
 
 with c3.beta_expander("Show JSON output for the current config"):
