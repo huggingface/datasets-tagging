@@ -60,7 +60,9 @@ creator_set = {
 def filter_features(features, name="", is_sequence=False):
     if isinstance(features, list):
         return filter_features(features[0], name, is_sequence=True)
-    elif features.get("_type", None) == 'Sequence':
+    if not isinstance(features, dict):
+        return {}, []
+    if features.get("_type", None) == 'Sequence':
         if "dtype" in features["feature"] or ("_type" in features["feature"] and features["feature"]["_type"] == "ClassLabel"):
             pre_filtered, desc = filter_features(features["feature"], name, is_sequence=True)
             filtered = {
