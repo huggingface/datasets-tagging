@@ -38,6 +38,7 @@
         "options": [
             "coreference-resolution",
             "named-entity-recognition",
+            "part-of-speech-tagging",
             "parsing",
             "other"
         ]
