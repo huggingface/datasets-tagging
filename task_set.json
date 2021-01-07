@@ -8,6 +8,7 @@
             "table-to-text",
             "text-simplification",
             "explanation-generation",
+            "meaning-representtion-to-text",
             "other-stuctured-to-text",
             "other"
         ]
@@ -20,6 +21,8 @@
             "multiple-choice-qa",
             "extractive-qa",
             "abstractive-qa",
+            "conversational-qa",
+            "multi-hop-qa",
             "other"
         ]
     },
@@ -39,6 +42,9 @@
             "coreference-resolution",
             "named-entity-recognition",
             "part-of-speech-tagging",
+            "relation-extraction",
+            "morphology-prediction",
+            "tokenization",
             "parsing",
             "other"
         ]
@@ -56,6 +62,7 @@
             "semantic-similarity-classification",
             "sentiment-classification",
             "topic-classification",
+            "hate-speech-detection",
             "other"
         ]
     },
