@@ -1,0 +1,1 @@
+{"annotations_creators": ["found"], "language_creators": ["found"], "languages": ["en"], "licenses": ["cc-by-nc-sa-3.0"], "multilinguality": ["monolingual"], "size_categories": ["n<1K"], "source_datasets": ["extended|other-Switchboard-1 Telephone Speech Corpus, Release 2"], "task_categories": ["text-classification"], "task_ids": ["multi-label-classification"]}

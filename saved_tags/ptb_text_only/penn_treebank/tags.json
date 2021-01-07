@@ -1,0 +1,1 @@
+{"annotations_creators": ["expert-generated"], "language_creators": ["found"], "languages": ["en"], "licenses": ["other-LDC User Agreement for Non-Members"], "multilinguality": ["monolingual"], "size_categories": ["n<1K"], "source_datasets": ["original"], "task_categories": ["sequence-modeling"], "task_ids": ["language-modeling"]}

@@ -1,0 +1,1 @@
+{"annotations_creators": ["expert-generated", "found"], "language_creators": ["expert-generated", "found"], "languages": ["en"], "licenses": ["unknown"], "multilinguality": ["monolingual"], "size_categories": ["n>1M"], "source_datasets": ["extended|other-TriviaQA"], "task_categories": ["question-answering"], "task_ids": ["extractive-qa", "open-domain-qa"]}

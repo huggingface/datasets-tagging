@@ -1,0 +1,1 @@
+{"annotations_creators": ["machine-generated"], "language_creators": ["found"], "languages": ["en"], "licenses": ["unknown"], "multilinguality": ["monolingual"], "size_categories": ["10K<n<100K"], "source_datasets": ["extended|other-Generics-KB"], "task_categories": ["text-scoring"], "task_ids": ["text-scoring-other-Meronym-Prediction"]}

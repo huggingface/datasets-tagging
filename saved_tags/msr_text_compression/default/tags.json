@@ -1,0 +1,1 @@
+{"annotations_creators": ["crowdsourced"], "language_creators": ["found"], "languages": ["en"], "licenses": ["other-Microsoft Research Data License"], "multilinguality": ["monolingual"], "size_categories": ["1K<n<10K"], "source_datasets": ["extended|other-Open-American-National-Corpus-(OANC1)"], "task_categories": ["conditional-text-generation"], "task_ids": ["summarization"]}

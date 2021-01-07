@@ -1,0 +1,1 @@
+{"annotations_creators": ["crowdsourced"], "language_creators": ["crowdsourced", "machine-generated"], "languages": ["sv"], "licenses": ["unknown"], "multilinguality": ["monolingual"], "size_categories": ["1K<n<10K"], "source_datasets": ["extended|other-sts-b"], "task_categories": ["text-scoring"], "task_ids": ["semantic-similarity-scoring"]}

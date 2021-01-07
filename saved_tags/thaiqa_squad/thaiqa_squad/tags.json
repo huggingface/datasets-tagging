@@ -1,0 +1,1 @@
+{"annotations_creators": ["expert-generated"], "language_creators": ["found"], "languages": ["th"], "licenses": ["cc-by-nc-sa-3.0"], "multilinguality": ["monolingual"], "size_categories": ["1K<n<10K"], "source_datasets": ["extended|other-thaiqa"], "task_categories": ["question-answering"], "task_ids": ["extractive-qa", "open-domain-qa"]}

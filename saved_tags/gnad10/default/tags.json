@@ -1,0 +1,1 @@
+{"annotations_creators": ["crowdsourced"], "language_creators": ["found"], "languages": ["de"], "licenses": ["cc-by-nc-sa-4.0"], "multilinguality": ["monolingual"], "size_categories": ["10K<n<100K"], "source_datasets": ["extended|other-from-One-Million-Posts-Corpus"], "task_categories": ["text-classification"], "task_ids": ["topic-classification"]}

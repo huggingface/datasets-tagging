@@ -1,0 +1,1 @@
+{"annotations_creators": ["expert-generated", "machine-generated"], "language_creators": ["found"], "languages": ["et", "en"], "licenses": ["unknown"], "multilinguality": ["translation"], "size_categories": ["1K<n<10K"], "source_datasets": ["extended|reddit", "extended|wikipedia"], "task_categories": ["conditional-text-generation"], "task_ids": ["machine-translation"]}

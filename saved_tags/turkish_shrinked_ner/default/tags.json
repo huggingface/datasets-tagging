@@ -1,0 +1,1 @@
+{"annotations_creators": ["machine-generated"], "language_creators": ["expert-generated"], "languages": ["tr"], "licenses": ["cc-by-4.0"], "multilinguality": ["monolingual"], "size_categories": ["100K<n<1M"], "source_datasets": ["extended|other-turkish_ner"], "task_categories": ["structure-prediction"], "task_ids": ["named-entity-recognition"]}

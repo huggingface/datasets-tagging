@@ -1,0 +1,1 @@
+{"annotations_creators": ["expert-generated"], "language_creators": ["found"], "languages": ["st"], "licenses": ["other-Creative Commons Attribution 2.5 South Africa License"], "multilinguality": ["monolingual"], "size_categories": ["1K<n<10K"], "source_datasets": ["original"], "task_categories": ["structure-prediction"], "task_ids": ["named-entity-recognition"]}

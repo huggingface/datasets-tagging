@@ -1,0 +1,1 @@
+{"annotations_creators": ["expert-generated"], "language_creators": ["found"], "languages": ["th"], "licenses": ["cc-by-sa-4.0"], "multilinguality": ["monolingual"], "size_categories": ["1K<n<10K"], "source_datasets": ["extended|squad", "extended|xquad"], "task_categories": ["question-answering"], "task_ids": ["extractive-qa"]}

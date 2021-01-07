@@ -1,0 +1,1 @@
+{"annotations_creators": ["expert-generated"], "language_creators": ["crowdsourced"], "languages": ["got"], "licenses": ["unknown"], "multilinguality": ["multilingual"], "size_categories": ["1K<n<10K"], "source_datasets": ["original"], "task_categories": ["other"], "task_ids": ["constituency-parsing", "dependency-parsing"]}

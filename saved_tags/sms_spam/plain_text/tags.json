@@ -1,0 +1,1 @@
+{"annotations_creators": ["crowdsourced", "found"], "language_creators": ["crowdsourced", "found"], "languages": ["en"], "licenses": ["unknown"], "multilinguality": ["monolingual"], "size_categories": ["1K<n<10K"], "source_datasets": ["extended|other-nus-sms-corpus"], "task_categories": ["text-classification"], "task_ids": ["intent-classification"]}

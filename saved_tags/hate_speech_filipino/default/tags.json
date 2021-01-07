@@ -1,0 +1,1 @@
+{"annotations_creators": ["machine-generated"], "language_creators": ["crowdsourced"], "languages": ["tl"], "licenses": ["unknown"], "multilinguality": ["monolingual"], "size_categories": ["10K<n<100K"], "source_datasets": ["extended|other-twitter-data-philippine-election"], "task_categories": ["text-classification"], "task_ids": ["sentiment-analysis"]}

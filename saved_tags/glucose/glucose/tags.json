@@ -1,0 +1,1 @@
+{"annotations_creators": ["crowdsourced"], "language_creators": ["crowdsourced"], "languages": ["en"], "licenses": ["cc-by-4.0"], "multilinguality": ["monolingual"], "size_categories": ["10K<n<100K"], "source_datasets": ["extended|other-ROC-stories"], "task_categories": ["sequence-modeling"], "task_ids": ["sequence-modeling-other-common-sense-inference"]}

@@ -1,0 +1,1 @@
+{"annotations_creators": ["found"], "language_creators": ["found"], "languages": ["en"], "licenses": ["unknown"], "multilinguality": ["monolingual"], "size_categories": ["n>1M"], "source_datasets": ["extended|other-yahoo-answers-corpus"], "task_categories": ["text-classification"], "task_ids": ["topic-classification"]}

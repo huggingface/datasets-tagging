@@ -1,0 +1,1 @@
+{"annotations_creators": ["no-annotation"], "language_creators": ["expert-generated", "machine-generated"], "languages": ["en"], "licenses": ["ms-pl"], "multilinguality": ["monolingual", "translation"], "size_categories": ["1K<n<10K"], "source_datasets": ["extended|other-newstest2017"], "task_categories": ["conditional-text-generation"], "task_ids": ["machine-translation"]}

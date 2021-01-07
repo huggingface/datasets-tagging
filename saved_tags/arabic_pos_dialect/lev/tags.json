@@ -1,0 +1,1 @@
+{"annotations_creators": ["expert-generated"], "language_creators": ["found"], "languages": ["ar"], "licenses": ["apache-2.0"], "multilinguality": ["multilingual"], "size_categories": ["1K<n<10K"], "source_datasets": ["extended"], "task_categories": ["structure-prediction"], "task_ids": ["structure-prediction-other-pos-tagging"]}

@@ -1,0 +1,1 @@
+{"annotations_creators": ["crowdsourced"], "language_creators": ["found"], "languages": ["en"], "licenses": ["unknown"], "multilinguality": ["monolingual"], "size_categories": ["1K<n<10K"], "source_datasets": ["extended|other-MPQA-KBP Challenge-MediaRank"], "task_categories": ["text-classification"], "task_ids": ["sentiment-classification"]}

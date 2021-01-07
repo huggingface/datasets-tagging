@@ -1,0 +1,1 @@
+{"annotations_creators": ["crowdsourced"], "language_creators": ["found"], "languages": ["en"], "licenses": ["mit"], "multilinguality": ["monolingual"], "size_categories": ["1K<n<10K"], "source_datasets": ["extended|squad"], "task_categories": ["question-answering"], "task_ids": ["extractive-qa"]}

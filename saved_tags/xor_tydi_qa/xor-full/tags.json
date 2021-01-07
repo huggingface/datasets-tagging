@@ -1,0 +1,1 @@
+{"annotations_creators": ["crowdsourced"], "language_creators": ["expert-generated", "found"], "languages": ["ar", "bn", "fi", "ja", "ko", "ru", "te"], "licenses": ["mit"], "multilinguality": ["multilingual"], "size_categories": ["10K<n<100K"], "source_datasets": ["original", "extended|tydiqa"], "task_categories": ["question-answering"], "task_ids": ["open-domain-qa"]}

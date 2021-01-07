@@ -1,0 +1,1 @@
+{"annotations_creators": ["expert-generated", "found"], "language_creators": ["crowdsourced", "expert-generated"], "languages": ["de", "en", "es", "nl"], "licenses": ["unknown"], "multilinguality": ["multilingual"], "size_categories": ["10K<n<100K"], "source_datasets": ["extended|conll2003"], "task_categories": ["structure-prediction"], "task_ids": ["named-entity-recognition"]}

@@ -1,0 +1,1 @@
+{"annotations_creators": ["expert-generated", "found"], "language_creators": ["found"], "languages": ["en", "yo"], "licenses": ["cc-by-4.0"], "multilinguality": ["translation"], "size_categories": ["10K<n<100K"], "source_datasets": ["original"], "task_categories": ["conditional-text-generation"], "task_ids": ["machine-translation"]}

@@ -1,0 +1,1 @@
+{"annotations_creators": ["machine-generated"], "language_creators": ["crowdsourced"], "languages": ["en", "nl"], "licenses": ["cc-by-nc-4.0"], "multilinguality": ["multilingual"], "size_categories": ["100K< n<1M"], "source_datasets": ["original"], "task_categories": ["text-classification"], "task_ids": ["sentiment-classification", "multi-label-classification"]}

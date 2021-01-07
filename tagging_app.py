@@ -12,9 +12,6 @@ from typing import Dict
 from glob import glob
 from os.path import join as pjoin
 
-
-load_remote_datasets = "--load_remote_datasets" in sys.argv[1:]
-
 st.set_page_config(
     page_title="HF Dataset Tagging App",
     page_icon="https://huggingface.co/front/assets/huggingface_logo.svg",
@@ -193,37 +190,22 @@ The tag sets are saved in JSON format, but you can print a YAML version in the r
 """
 
 existing_tag_sets = load_existing_tags()
-all_dataset_ids = list(existing_tag_sets.keys()) if not load_remote_datasets else copy.deepcopy(get_dataset_list())
-all_dataset_infos = {} if not load_remote_datasets else load_all_dataset_infos(all_dataset_ids)
+all_dataset_ids = copy.deepcopy(get_dataset_list())
+all_dataset_infos = {} # if not load_remote_datasets else load_all_dataset_infos(all_dataset_ids)
 
 st.sidebar.markdown(app_desc)
 
 # option to only select from datasets that still need to be annotated
 all_info_dicts = {}
-path_to_info = st.sidebar.text_input("Please enter the path to the folder where the dataset_infos.json file was generated", "/path/to/dataset/")
-if path_to_info not in ["/path/to/dataset/", ""]:
-    dataset_infos = json.load(open(pjoin(path_to_info, "dataset_infos.json")))
-    confs = dataset_infos.keys()
-    all_info_dicts = {}
-    for conf, info in dataset_infos.items():
-        conf_info_dict = dict([(k, info[k]) for k in keep_keys])
-        all_info_dicts[conf] = conf_info_dict
-    dataset_id = list(dataset_infos.values())[0]["builder_name"]
-else:
-    dataset_id = "tmp_dir"
-    all_info_dicts = {
-        "default":{
-            'description': "",
-            'features': {},
-            'homepage': "",
-            'license': "",
-            'splits': {},
-        }
-    }
 
+dataset_id = st.sidebar.selectbox(
+    label="Choose dataset to tag",
+    options=all_dataset_ids,
+)
+
+all_info_dicts = get_info_dicts(dataset_id)
 
 config_choose_list = list(all_info_dicts.keys())
-
 config_id = st.sidebar.selectbox(
     label="Choose configuration",
     options=config_choose_list,
@@ -463,14 +445,6 @@ with c3.beta_expander("Show YAML output aggregating the tags saved for all confi
             for conf_name in aggregate_config[tag_k]:
                 aggregate_config[tag_k][conf_name] = list(aggregate_config[tag_k][conf_name])
     st.text('---\n' + yaml.dump(aggregate_config) + '---')
-
-with c3.beta_expander(f"Show Markdown Data Fields for config: {config_id}", expanded=True):
-    st.text('\n'.join(feature_descs))
-
-with c3.beta_expander("Show JSON output for the current config"):
-    st.write(res)
-
-c3.markdown("---  ")
 
 with c3.beta_expander("----> show full task set <----", expanded=True):
     st.write(task_set)

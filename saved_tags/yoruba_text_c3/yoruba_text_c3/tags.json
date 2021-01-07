@@ -1,0 +1,1 @@
+{"annotations_creators": ["expert-generated"], "language_creators": ["found"], "languages": ["yo"], "licenses": ["cc-by-nc-4.0"], "multilinguality": ["monolingual"], "size_categories": ["100K<n<1M"], "source_datasets": ["original"], "task_categories": ["sequence-modeling"], "task_ids": ["language-modeling"]}
