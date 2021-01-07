@@ -1,0 +1,1 @@
+{"task_categories": ["conditional-text-generation"], "task_ids": ["text-simplification"], "multilinguality": ["monolingual"], "languages": ["en"], "language_creators": ["found"], "annotations_creators": ["machine-generated"], "source_datasets": ["extended|other-wikipedia"], "size_categories": ["100K<n<1M"], "licenses": ["cc-by-sa-3.0"]}

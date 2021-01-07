@@ -1,0 +1,1 @@
+{"task_categories": ["sequence-modeling"], "task_ids": ["language-modeling"], "multilinguality": ["monolingual"], "languages": ["chr"], "language_creators": ["found"], "annotations_creators": ["found"], "source_datasets": ["original"], "size_categories": ["1K<n<10K"], "licenses": ["other-different-license-per-source"]}

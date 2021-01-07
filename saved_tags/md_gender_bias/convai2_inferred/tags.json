@@ -1,0 +1,1 @@
+{"task_categories": ["text-classification"], "task_ids": ["text-classification-other-gender-bias"], "multilinguality": ["monolingual"], "languages": ["en"], "language_creators": ["found"], "annotations_creators": ["machine-generated"], "source_datasets": ["original", "extended|other-convai2"], "size_categories": ["100K<n<1M"], "licenses": ["mit"]}
