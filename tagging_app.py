@@ -181,7 +181,7 @@ st.sidebar.markdown(
 app_desc_intro = """
 ### Dataset Tagger Instructions
 
-This app aims to make it easier to add structured tags to the datasets present in the library.
+This app aims to make it easier to add or modify structured tags for the datasets present in the library.
 To do so, please follow the following instructions:
 """
 app_desc_1 = """
