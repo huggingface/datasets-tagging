@@ -178,29 +178,53 @@ st.sidebar.markdown(
     unsafe_allow_html=True,
 )
 
-app_desc = """
-### Dataset Tagger
+app_desc_intro = """
+### Dataset Tagger Instructions
 
 This app aims to make it easier to add structured tags to the datasets present in the library.
+To do so, please follow the following instructions:
+"""
+app_desc_1 = """
+#### Step 1: Tag each configuration
 
-Each configuration requires its own tasks, as these often correspond to distinct sub-tasks. However, we provide the opportunity
+Each configuration requires its own tags, as these often correspond to distinct sub-tasks. However, we provide the opportunity
 to pre-load the tag sets from another dataset or configuration to avoid too much redundancy.
 
-The tag sets are saved in JSON format, but you can print a YAML version in the right-most column to copy-paste to the config README.md
+If you aren't sure which task tags apply, you can look at the full set in the `Show full task set` section in the right column, choose all that apply.
+
+Once you are done tagging **each** configuration, **remember to save your work** by clicking the `Save Config Tags!` button on the right.
+"""
+app_desc_2 = """
+#### Step 2: Update the README.md file on the [datasets](https://github.com/huggingface/datasets) repository
+
+Once you have tagged all of the configurations for the dataset, you can expand the `Show Aggregated Tags in YAML` section on the right column.
+
+The `Open File in Github` link in the expanded section will take you straight to the Github file you need to change.
+
+To do so, you will need to:
+- Fork the [datasets](https://github.com/huggingface/datasets) repository
+- Create a new branch with an informative name (e.g.: `update_tags_dataset_name`)
+- overwrite the YAML at the top of relevant the file (the part between the `---` lines) with the one shown here
+- commit and push your changes and open a new pull request
+
+For more information, please refer to our [contributing guide](https://github.com/huggingface/datasets/blob/master/CONTRIBUTING.md)!
 """
 
 existing_tag_sets = load_existing_tags()
 all_dataset_ids = copy.deepcopy(get_dataset_list())
 all_dataset_infos = {} # if not load_remote_datasets else load_all_dataset_infos(all_dataset_ids)
 
-st.sidebar.markdown(app_desc)
-
 # option to only select from datasets that still need to be annotated
 all_info_dicts = {}
+
+query_params = st.experimental_get_query_params()
+dataset_id_list = query_params.get('dataset_id', [])
+preselect_index = all_dataset_ids.index(dataset_id_list[0]) if len(dataset_id_list) > 0 and dataset_id_list[0] in all_dataset_ids else 0
 
 dataset_id = st.sidebar.selectbox(
     label="Choose dataset to tag",
     options=all_dataset_ids,
+    index=preselect_index,
 )
 
 all_info_dicts = get_info_dicts(dataset_id)
@@ -212,6 +236,12 @@ config_id = st.sidebar.selectbox(
 )
 
 config_infos = all_info_dicts[config_id]
+
+st.sidebar.markdown(app_desc_intro)
+with st.sidebar.beta_expander("> Step 1: Tag", expanded=False):
+    st.markdown(app_desc_1)
+with st.sidebar.beta_expander("> Step 2: Submit", expanded=False):
+    st.markdown(app_desc_2)
 
 c1, _, c2, _, c3 = st.beta_columns([8, 1, 12, 1, 12])
 
@@ -240,8 +270,6 @@ c2.markdown(f"### Writing tags for: {dataset_id} / {config_id}")
 ##########
 # Pre-load information to speed things up
 ##########
-c2.markdown("#### Pre-loading an existing tag set")
-
 pre_loaded = {
     "task_categories": [],
     "task_ids": [],
@@ -254,11 +282,14 @@ pre_loaded = {
     "licenses": [],
 }
 
-if existing_tag_sets.get(dataset_id, {}).get(config_id, None) is not None:
-    existing_tags_fname = existing_tag_sets[dataset_id][config_id]
-    c2.markdown(f"#### Attention: this config already has a tagset saved in {existing_tags_fname}\n---  \n")
-    if c2.checkbox("pre-load existing tag set"):
-        pre_loaded = json.load(open(existing_tags_fname))
+pre_loaded["languages"] = list(set(pre_loaded["languages"] + find_languages(features)))
+if config_infos["license"] in license_set:
+    pre_loaded["licenses"] = list(set(pre_loaded["licenses"] + [config_infos["license"]]))
+
+##########
+# Modify or add new tags
+##########
+c2.markdown("#### Editing the tag set")
 
 c2.markdown("> *You may choose to pre-load the tag set of another dataset or configuration:*")
 
@@ -280,21 +311,15 @@ with c2.beta_expander("- Choose tag set to pre-load"):
     else:
         st.write("There are currently no other saved tag sets.")
 
-pre_loaded["languages"] = list(set(pre_loaded["languages"] + find_languages(features)))
-if config_infos["license"] in license_set:
-    pre_loaded["licenses"] = list(set(pre_loaded["licenses"] + [config_infos["license"]]))
 
-##########
-# Modify or add new tags
-##########
-c2.markdown("#### Editing the tag set")
+
 c2.markdown("> *Expand the following boxes to edit the tag set. For each of the questions, choose all that apply, at least one option:*")
 
-with c2.beta_expander("- Supported tasks", expanded=True):
+with c2.beta_expander("- Edit tags: Supported tasks", expanded=False):
     task_categories = st.multiselect(
         "What categories of task does the dataset support?",
         options=list(task_set.keys()),
-        default=pre_loaded["task_categories"],
+        default=[tc for tc in pre_loaded["task_categories"] if tc in task_set],
         format_func=lambda tg: f"{tg} : {task_set[tg]['description']}",
     )
     task_specifics = []
@@ -313,11 +338,11 @@ with c2.beta_expander("- Supported tasks", expanded=True):
             task_specs[task_specs.index("other")] = f"{tg}-other-{other_task}"
         task_specifics += task_specs
 
-with c2.beta_expander("- Languages", expanded=True):
+with c2.beta_expander("- Edit tags: Languages", expanded=False):
     multilinguality = st.multiselect(
         "Does the dataset contain more than one language?",
         options=list(multilinguality_set.keys()),
-        default=pre_loaded["multilinguality"],
+        default=[ml for ml in pre_loaded["multilinguality"] if ml in multilinguality_set],
         format_func= lambda m: f"{m} : {multilinguality_set[m]}",
     )
     if "other" in multilinguality:
@@ -330,11 +355,11 @@ with c2.beta_expander("- Languages", expanded=True):
     languages = st.multiselect(
         "What languages are represented in the dataset?",
         options=list(language_set.keys()),
-        default=pre_loaded["languages"],
+        default=[ln for ln in pre_loaded["languages"] if ln in language_set],
         format_func= lambda m: f"{m} : {language_set[m]}",
     )
 
-with c2.beta_expander("- Dataset creators", expanded=True):
+with c2.beta_expander("- Edit tags: Dataset creators", expanded=False):
     language_creators = st.multiselect(
         "Where does the text in the dataset come from?",
         options=creator_set["language"],
@@ -348,7 +373,7 @@ with c2.beta_expander("- Dataset creators", expanded=True):
     licenses = st.multiselect(
         "What licenses is the dataset under?",
         options=list(license_set.keys()),
-        default=pre_loaded["licenses"],
+        default=[lc for lc in pre_loaded["licenses"] if lc in license_set],
         format_func= lambda l: f"{l} : {license_set[l]}",
     )
     if "other" in licenses:
@@ -375,7 +400,7 @@ with c2.beta_expander("- Dataset creators", expanded=True):
         extended_sources = st.multiselect(
             "Which other datasets does this one use data from?",
             options=all_dataset_ids + ["other"],
-            default=pre_select_ext_b,
+            default=[pse for pse in pre_select_ext_b is pse in all_dataset_ids],
         )
         if "other" in extended_sources:
             other_extended_sources = st.text_input(
@@ -421,14 +446,16 @@ res = {
 ########################
 c3.markdown("### Finalized tag set:")
 
-if c3.button("Done? Save to File!"):
+if c3.button("Save Config Tags!"):
     if not os.path.isdir(pjoin('saved_tags', dataset_id)):
         _ = os.mkdir(pjoin('saved_tags', dataset_id))
     if not os.path.isdir(pjoin('saved_tags', dataset_id, config_id)):
         _ = os.mkdir(pjoin('saved_tags', dataset_id, config_id))
     json.dump(res, open(pjoin('saved_tags', dataset_id, config_id, 'tags.json'), 'w'))
 
-with c3.beta_expander("Show YAML output aggregating the tags saved for all configs", expanded=False):
+with c3.beta_expander("Show Aggregated Tags in YAML", expanded=False):
+    st.markdown(f"#### [Open File in Github](https://github.com/huggingface/datasets/blob/master/datasets/{dataset_id}/README.md)")
+    st.text("")
     task_saved_configs = dict([
         (Path(fname).parent.name, json.load(open(fname)))
         for fname in glob(f"saved_tags/{dataset_id}/*/tags.json")
@@ -446,5 +473,5 @@ with c3.beta_expander("Show YAML output aggregating the tags saved for all confi
                 aggregate_config[tag_k][conf_name] = list(aggregate_config[tag_k][conf_name])
     st.text('---\n' + yaml.dump(aggregate_config) + '---')
 
-with c3.beta_expander("----> show full task set <----", expanded=True):
+with c3.beta_expander("Show full task set", expanded=False):
     st.write(task_set)
