@@ -1,9 +1,7 @@
 import json
-import os
-from dataclasses import asdict
-from glob import glob
+from pathlib import Path
+from typing import List, Tuple
 
-import datasets
 import streamlit as st
 import yaml
 
@@ -17,7 +15,6 @@ st.set_page_config(
 task_set = json.load(open("task_set.json"))
 license_set = json.load(open("license_set.json"))
 language_set_restricted = json.load(open("language_set.json"))
-language_set = json.load(open("language_set_full.json"))
 
 multilinguality_set = {
     "monolingual": "contains a single language",
@@ -49,13 +46,21 @@ creator_set = {
 ########################
 
 
-def load_existing_tags():
-    has_tags = {}
-    for fname in glob("saved_tags/*/*/tags.json"):
-        _, did, cid, _ = fname.split(os.sep)
-        has_tags[did] = has_tags.get(did, {})
-        has_tags[did][cid] = fname
-    return has_tags
+@st.cache(allow_output_mutation=True)
+def load_ds_datas():
+    metada_exports = sorted(
+        [f for f in Path.cwd().iterdir() if f.name.startswith("metadata_")],
+        key=lambda f: f.lstat().st_mtime,
+        reverse=True,
+    )
+    if len(metada_exports) == 0:
+        raise ValueError("need to run ./build_metada_file.py at least once")
+    with metada_exports[0].open() as fi:
+        return json.load(fi)
+
+
+def split_known(vals: List[str], okset: List[str]) -> Tuple[List[str], List[str]]:
+    return [v for v in vals if v in okset], [v for v in vals if v not in okset]
 
 
 def new_pre_loaded():
@@ -73,8 +78,8 @@ def new_pre_loaded():
 
 
 pre_loaded = new_pre_loaded()
-
-existing_tag_sets = load_existing_tags()
+datasets_md = load_ds_datas()
+existing_tag_sets = {name: mds["metadata"] for name, mds in datasets_md.items()}
 all_dataset_ids = list(existing_tag_sets.keys())
 
 
@@ -104,34 +109,29 @@ Beware that clicking pre-load will overwrite the current state!
 
 qp = st.experimental_get_query_params()
 preload = qp.get("preload_dataset", list())
-did_index = 2
+preloaded_id = None
+did_index = 0
 if len(preload) == 1 and preload[0] in all_dataset_ids:
-    did_qp, *_ = preload
-    cid_qp = next(iter(existing_tag_sets[did_qp]))
-    pre_loaded = json.load(open(existing_tag_sets[did_qp][cid_qp]))
-    did_index = all_dataset_ids.index(did_qp)
+    preloaded_id, *_ = preload
+    pre_loaded = existing_tag_sets[preloaded_id] or new_pre_loaded()
+    did_index = all_dataset_ids.index(preloaded_id)
 
 did = st.sidebar.selectbox(label="Choose dataset to load tag set from", options=all_dataset_ids, index=did_index)
-if len(existing_tag_sets[did]) > 1:
-    cid = st.sidebar.selectbox(
-        label="Choose config to load tag set from",
-        options=list(existing_tag_sets[did].keys()),
-        index=0,
-    )
-else:
-    cid = next(iter(existing_tag_sets[did].keys()))
 
-if st.sidebar.button("pre-load this tag set"):
-    pre_loaded = json.load(open(existing_tag_sets[did][cid]))
+leftbtn, rightbtn = st.sidebar.beta_columns(2)
+if leftbtn.button("pre-load tagset"):
+    pre_loaded = existing_tag_sets[did] or new_pre_loaded()
     st.experimental_set_query_params(preload_dataset=did)
-if st.sidebar.button("flush state"):
+if rightbtn.button("flush state"):
     pre_loaded = new_pre_loaded()
     st.experimental_set_query_params()
 
+if preloaded_id is not None:
+    st.sidebar.markdown(f"Took [{preloaded_id}](https://huggingface.co/datasets/{preloaded_id}) as base tagset.")
+
+
 leftcol, _, rightcol = st.beta_columns([12, 1, 12])
 
-
-pre_loaded["languages"] = list(set(pre_loaded["languages"]))
 
 leftcol.markdown("### Supported tasks")
 task_categories = leftcol.multiselect(
@@ -156,13 +156,18 @@ for tg in task_categories:
         task_specs[task_specs.index("other")] = f"{tg}-other-{other_task}"
     task_specifics += task_specs
 
+
 leftcol.markdown("### Languages")
+filtered_existing_languages = [lgc for lgc in set(pre_loaded["languages"]) if lgc not in language_set_restricted]
+pre_loaded["languages"] = [lgc for lgc in set(pre_loaded["languages"]) if lgc in language_set_restricted]
+
 multilinguality = leftcol.multiselect(
     "Does the dataset contain more than one language?",
     options=list(multilinguality_set.keys()),
     default=pre_loaded["multilinguality"],
     format_func=lambda m: f"{m} : {multilinguality_set[m]}",
 )
+
 if "other" in multilinguality:
     other_multilinguality = st.text_input(
         "You selected 'other' type of multilinguality. Please enter a short hyphen-separated description:",
@@ -170,28 +175,42 @@ if "other" in multilinguality:
     )
     st.write(f"Registering other-{other_multilinguality} multilinguality")
     multilinguality[multilinguality.index("other")] = f"other-{other_multilinguality}"
+
+if len(filtered_existing_languages) > 0:
+    leftcol.markdown(f"**Found bad language codes in existing tagset**:\n{filtered_existing_languages}")
 languages = leftcol.multiselect(
     "What languages are represented in the dataset?",
-    options=list(language_set.keys()),
+    options=list(language_set_restricted.keys()),
     default=pre_loaded["languages"],
-    format_func=lambda m: f"{m} : {language_set[m]}",
+    format_func=lambda m: f"{m} : {language_set_restricted[m]}",
 )
 
+
 leftcol.markdown("### Dataset creators")
+ok, nonok = split_known(pre_loaded["language_creators"], creator_set["language"])
+if len(nonok) > 0:
+    leftcol.markdown(f"**Found bad codes in existing tagset**:\n{nonok}")
 language_creators = leftcol.multiselect(
     "Where does the text in the dataset come from?",
     options=creator_set["language"],
-    default=pre_loaded["language_creators"],
+    default=ok,
 )
+ok, nonok = split_known(pre_loaded["annotations_creators"], creator_set["annotations"])
+if len(nonok) > 0:
+    leftcol.markdown(f"**Found bad codes in existing tagset**:\n{nonok}")
 annotations_creators = leftcol.multiselect(
     "Where do the annotations in the dataset come from?",
     options=creator_set["annotations"],
-    default=pre_loaded["annotations_creators"],
+    default=ok,
 )
+
+ok, nonok = split_known(pre_loaded["licenses"], list(license_set.keys()))
+if len(nonok) > 0:
+    leftcol.markdown(f"**Found bad codes in existing tagset**:\n{nonok}")
 licenses = leftcol.multiselect(
     "What licenses is the dataset under?",
     options=list(license_set.keys()),
-    default=pre_loaded["licenses"],
+    default=ok,
     format_func=lambda l: f"{l} : {license_set[l]}",
 )
 if "other" in licenses:
@@ -228,33 +247,42 @@ if "extended" in extended:
         st.write(f"Registering other-{other_extended_sources} dataset")
         extended_sources[extended_sources.index("other")] = f"other-{other_extended_sources}"
     source_datasets += [f"extended|{src}" for src in extended_sources]
+
+size_cats = ["unknown", "n<1K", "1K<n<10K", "10K<n<100K", "100K<n<1M", "n>1M"]
+current_size_cats = pre_loaded.get("size_categories") or ["unknown"]
+ok, nonok = split_known(current_size_cats, size_cats)
+if len(nonok) > 0:
+    leftcol.markdown(f"**Found bad codes in existing tagset**:\n{nonok}")
 size_category = leftcol.selectbox(
     "What is the size category of the dataset?",
-    options=["unknown", "n<1K", "1K<n<10K", "10K<n<100K", "100K<n<1M", "n>1M"],
-    index=["unknown", "n<1K", "1K<n<10K", "10K<n<100K", "100K<n<1M", "n>1M"].index(
-        (pre_loaded.get("size_categories") or ["unknown"])[0]
-    ),
+    options=size_cats,
+    index=size_cats.index(ok[0]) if len(ok) > 0 else 0,
 )
 
 
 ########################
 ## Show results
 ########################
+yamlblock = yaml.dump(
+    {
+        "task_categories": task_categories,
+        "task_ids": task_specifics,
+        "multilinguality": multilinguality,
+        "languages": languages,
+        "language_creators": language_creators,
+        "annotations_creators": annotations_creators,
+        "source_datasets": source_datasets,
+        "size_categories": size_category,
+        "licenses": licenses,
+    }
+)
 rightcol.markdown(
     f"""
 ### Finalized tag set
+
+Copy it into your dataset's `README.md` header! 🤗 
+
 ```yaml
-{yaml.dump({
-    "task_categories": task_categories,
-    "task_ids": task_specifics,
-    "multilinguality": multilinguality,
-    "languages": languages,
-    "language_creators": language_creators,
-    "annotations_creators": annotations_creators,
-    "source_datasets": source_datasets,
-    "size_categories": size_category,
-    "licenses": licenses,
-})}
-```
-"""
+{yamlblock}
+```""",
 )
