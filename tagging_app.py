@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import List, Tuple
+from typing import Callable, List, Tuple
 
 import streamlit as st
 import yaml
@@ -59,10 +59,32 @@ def load_ds_datas():
 
 
 def split_known(vals: List[str], okset: List[str]) -> Tuple[List[str], List[str]]:
+    if vals is None:
+        return [], []
     return [v for v in vals if v in okset], [v for v in vals if v not in okset]
 
 
-def new_pre_loaded():
+def multiselect(
+    w: st.delta_generator.DeltaGenerator,
+    title: str,
+    markdown: str,
+    values: List[str],
+    valid_set: List[str],
+    format_func: Callable = str,
+):
+    valid_values, invalid_values = split_known(values, valid_set)
+    w.markdown(
+        """
+#### {title}
+{errors}
+""".format(
+            title=title, errors="" if len(invalid_values) == 0 else f"_Found invalid values:_ `{invalid_values}`"
+        )
+    )
+    return w.multiselect(markdown, valid_set, default=valid_values, format_func=format_func)
+
+
+def new_state():
     return {
         "task_categories": [],
         "task_ids": [],
@@ -76,7 +98,7 @@ def new_pre_loaded():
     }
 
 
-pre_loaded = new_pre_loaded()
+state = new_state()
 datasets_md = load_ds_datas()
 existing_tag_sets = {name: mds["metadata"] for name, mds in datasets_md.items()}
 all_dataset_ids = list(existing_tag_sets.keys())
@@ -112,39 +134,50 @@ preloaded_id = None
 did_index = 0
 if len(preload) == 1 and preload[0] in all_dataset_ids:
     preloaded_id, *_ = preload
-    pre_loaded = existing_tag_sets[preloaded_id] or new_pre_loaded()
+    state = existing_tag_sets[preloaded_id] or new_state()
     did_index = all_dataset_ids.index(preloaded_id)
 
 did = st.sidebar.selectbox(label="Choose dataset to load tag set from", options=all_dataset_ids, index=did_index)
 
 leftbtn, rightbtn = st.sidebar.beta_columns(2)
 if leftbtn.button("pre-load tagset"):
-    pre_loaded = existing_tag_sets[did] or new_pre_loaded()
+    state = existing_tag_sets[did] or new_state()
     st.experimental_set_query_params(preload_dataset=did)
 if rightbtn.button("flush state"):
-    pre_loaded = new_pre_loaded()
+    state = new_state()
     st.experimental_set_query_params()
 
 if preloaded_id is not None:
-    st.sidebar.markdown(f"Took [{preloaded_id}](https://huggingface.co/datasets/{preloaded_id}) as base tagset.")
+    st.sidebar.markdown(
+        f"""
+Took [`{preloaded_id}`](https://huggingface.co/datasets/{preloaded_id}) as base tagset:
+```yaml
+{yaml.dump(state)}
+```
+"""
+    )
 
 
 leftcol, _, rightcol = st.beta_columns([12, 1, 12])
 
 
 leftcol.markdown("### Supported tasks")
-task_categories = leftcol.multiselect(
+task_categories = multiselect(
+    leftcol,
+    "Task category",
     "What categories of task does the dataset support?",
-    options=list(task_set.keys()),
-    default=pre_loaded["task_categories"],
-    format_func=lambda tg: f"{tg} : {task_set[tg]['description']}",
+    values=state["task_categories"],
+    valid_set=list(task_set.keys()),
+    format_func=lambda tg: f"{tg}: {task_set[tg]['description']}",
 )
 task_specifics = []
 for tg in task_categories:
-    task_specs = leftcol.multiselect(
+    task_specs = multiselect(
+        leftcol,
+        "Specific tasks",
         f"What specific *{tg}* tasks does the dataset support?",
-        options=task_set[tg]["options"],
-        default=[ts for ts in pre_loaded["task_ids"] if ts in task_set[tg]["options"]],
+        values=[ts for ts in state["task_ids"] if ts in task_set[tg]["options"]],
+        valid_set=task_set[tg]["options"],
     )
     if "other" in task_specs:
         other_task = st.text_input(
@@ -157,13 +190,13 @@ for tg in task_categories:
 
 
 leftcol.markdown("### Languages")
-filtered_existing_languages = [lgc for lgc in set(pre_loaded["languages"]) if lgc not in language_set_restricted]
-pre_loaded["languages"] = [lgc for lgc in set(pre_loaded["languages"]) if lgc in language_set_restricted]
 
-multilinguality = leftcol.multiselect(
+multilinguality = multiselect(
+    leftcol,
+    "Monolingual?",
     "Does the dataset contain more than one language?",
-    options=list(multilinguality_set.keys()),
-    default=pre_loaded["multilinguality"],
+    values=state["multilinguality"],
+    valid_set=list(multilinguality_set.keys()),
     format_func=lambda m: f"{m} : {multilinguality_set[m]}",
 )
 
@@ -175,41 +208,40 @@ if "other" in multilinguality:
     st.write(f"Registering other-{other_multilinguality} multilinguality")
     multilinguality[multilinguality.index("other")] = f"other-{other_multilinguality}"
 
-if len(filtered_existing_languages) > 0:
-    leftcol.markdown(f"**Found bad language codes in existing tagset**:\n{filtered_existing_languages}")
-languages = leftcol.multiselect(
+
+languages = multiselect(
+    leftcol,
+    "Languages",
     "What languages are represented in the dataset?",
-    options=list(language_set_restricted.keys()),
-    default=pre_loaded["languages"],
+    values=state["languages"],
+    valid_set=list(language_set_restricted.keys()),
     format_func=lambda m: f"{m} : {language_set_restricted[m]}",
 )
 
 
 leftcol.markdown("### Dataset creators")
-ok, nonok = split_known(pre_loaded["language_creators"], creator_set["language"])
-if len(nonok) > 0:
-    leftcol.markdown(f"**Found bad codes in existing tagset**:\n{nonok}")
-language_creators = leftcol.multiselect(
+language_creators = multiselect(
+    leftcol,
+    "Data origin",
     "Where does the text in the dataset come from?",
-    options=creator_set["language"],
-    default=ok,
+    values=state["language_creators"],
+    valid_set=creator_set["language"],
 )
-ok, nonok = split_known(pre_loaded["annotations_creators"], creator_set["annotations"])
-if len(nonok) > 0:
-    leftcol.markdown(f"**Found bad codes in existing tagset**:\n{nonok}")
-annotations_creators = leftcol.multiselect(
+annotations_creators = multiselect(
+    leftcol,
+    "Annotations origin",
     "Where do the annotations in the dataset come from?",
-    options=creator_set["annotations"],
-    default=ok,
+    values=state["annotations_creators"],
+    valid_set=creator_set["annotations"],
 )
 
-ok, nonok = split_known(pre_loaded["licenses"], list(license_set.keys()))
-if len(nonok) > 0:
-    leftcol.markdown(f"**Found bad codes in existing tagset**:\n{nonok}")
-licenses = leftcol.multiselect(
+
+licenses = multiselect(
+    leftcol,
+    "Licenses",
     "What licenses is the dataset under?",
-    options=list(license_set.keys()),
-    default=ok,
+    valid_set=list(license_set.keys()),
+    values=state["licenses"],
     format_func=lambda l: f"{l} : {license_set[l]}",
 )
 if "other" in licenses:
@@ -219,24 +251,31 @@ if "other" in licenses:
     )
     st.write(f"Registering other-{other_license} license")
     licenses[licenses.index("other")] = f"other-{other_license}"
-# link ro supported datasets
+
+# link to supported datasets
 pre_select_ext_a = []
-if "original" in pre_loaded["source_datasets"]:
+if "original" in state["source_datasets"]:
     pre_select_ext_a += ["original"]
-if any([p.startswith("extended") for p in pre_loaded["source_datasets"]]):
+if any([p.startswith("extended") for p in state["source_datasets"]]):
     pre_select_ext_a += ["extended"]
-extended = leftcol.multiselect(
+extended = multiselect(
+    leftcol,
+    "Relations to existing work",
     "Does the dataset contain original data and/or was it extended from other datasets?",
-    options=["original", "extended"],
-    default=pre_select_ext_a,
+    values=pre_select_ext_a,
+    valid_set=["original", "extended"],
 )
 source_datasets = ["original"] if "original" in extended else []
+
+# todo: show bad tags
 if "extended" in extended:
-    pre_select_ext_b = [p.split("|")[1] for p in pre_loaded["source_datasets"] if p.startswith("extended")]
-    extended_sources = leftcol.multiselect(
+    pre_select_ext_b = [p.split("|")[1] for p in state["source_datasets"] if p.startswith("extended")]
+    extended_sources = multiselect(
+        leftcol,
+        "Linked datasets",
         "Which other datasets does this one use data from?",
-        options=all_dataset_ids + ["other"],
-        default=pre_select_ext_b,
+        values=pre_select_ext_b,
+        valid_set=all_dataset_ids + ["other"],
     )
     if "other" in extended_sources:
         other_extended_sources = st.text_input(
@@ -248,7 +287,7 @@ if "extended" in extended:
     source_datasets += [f"extended|{src}" for src in extended_sources]
 
 size_cats = ["unknown", "n<1K", "1K<n<10K", "10K<n<100K", "100K<n<1M", "n>1M"]
-current_size_cats = pre_loaded.get("size_categories") or ["unknown"]
+current_size_cats = state.get("size_categories") or ["unknown"]
 ok, nonok = split_known(current_size_cats, size_cats)
 if len(nonok) > 0:
     leftcol.markdown(f"**Found bad codes in existing tagset**:\n{nonok}")
