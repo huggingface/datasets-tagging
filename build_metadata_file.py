@@ -52,5 +52,7 @@ def load_ds_datas():
 
 if __name__ == "__main__":
     head_sha, datas = load_ds_datas()
-    with open(f"metadata_{head_sha}.json", "w") as fi:
+    fn = f"metadata_{head_sha}.json"
+    print(f"writing to '{fn}'")
+    with open(fn, "w") as fi:
         fi.write(json.dumps(datas))

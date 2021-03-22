@@ -46,7 +46,6 @@ creator_set = {
 ########################
 
 
-@st.cache(allow_output_mutation=True)
 def load_ds_datas():
     metada_exports = sorted(
         [f for f in Path.cwd().iterdir() if f.name.startswith("metadata_")],
