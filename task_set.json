@@ -1,45 +1,104 @@
 {
+    "conditional-speech-generation": {
+        "description": "speech generation tasks",
+        "options": [
+            "speech-translation",
+            "text-to-speech",
+            "other"
+        ]
+    },
+    "conditional-structure-generation": {
+        "description": "text or speech to structured data",
+        "options": [
+            "code-generation",
+            "knowlege-graph-mining",
+            "other"
+        ]
+    },
     "conditional-text-generation": {
         "description": "data-to-text and text transduction tasks such as translation or summarization",
         "options": [
+            "abstractive-summarization",
+            "explanation-generation",
+            "extractive-and-abstractive-summarization",
+            "extractive-summarization",
             "machine-translation",
+            "multi-document-summarization",
             "sentence-splitting-fusion",
-            "summarization",
+            "stuctured-to-text",
             "table-to-text",
             "text-simplification",
-            "explanation-generation",
-            "other-stuctured-to-text",
+            "other"
+        ]
+    },
+    "image-classification": {
+        "description": "image classification tasks",
+        "options": [
+            "multi-class-classification",
+            "multi-label-classification",
+            "other"
+        ]
+    },
+    "other": {
+        "description": "raw data or other task families",
+        "options": [
+            "data-mining",
+            "raw-image",
+            "raw-speech",
+            "raw-text",
             "other"
         ]
     },
     "question-answering": {
         "description": "question answering tasks",
         "options": [
-            "open-domain-qa",
-            "closed-domain-qa",
-            "multiple-choice-qa",
-            "extractive-qa",
             "abstractive-qa",
+            "closed-domain-qa",
+            "conversational-qa",
+            "extractive-qa",
+            "multi-document-qa",
+            "multiple-choice-qa",
+            "open-domain-qa",
             "other"
         ]
     },
     "sequence-modeling": {
-        "description": "such as language modeling or dialogue",
+        "description": "such as language, speech or dialogue modeling",
         "options": [
             "dialogue-modeling",
             "language-modeling",
-            "other-multi-turn",
+            "multi-turn",
             "slot-filling",
+            "speech-modeling",
+            "other"
+        ]
+    },
+    "speech-classification": {
+        "description": "speech to label tasks",
+        "options": [
+            "other"
+        ]
+    },
+    "speech-recognition": {
+        "description": "speech to text tasks",
+        "options": [
+            "automatic-speech-recognition",
             "other"
         ]
     },
     "structure-prediction": {
         "description": "predicting structural properties of the text, such as syntax",
         "options": [
+            "clause-or-phrase-segmentation",
+            "constituency-parsing",
             "coreference-resolution",
+            "dependency-parsing",
+            "multi-span-prediction",
             "named-entity-recognition",
-            "part-of-speech-tagging",
             "parsing",
+            "part-of-speech-tagging",
+            "sentence-segmentation",
+            "single-span-prediction",
             "other"
         ]
     },
@@ -47,15 +106,24 @@
         "description": "predicting a class index or boolean value",
         "options": [
             "acceptability-classification",
+            "bias-classification",
+            "common-sense-reasoning",
+            "emotion-classification",
             "entity-linking-classification",
             "fact-checking",
+            "hate-speech-classification",
             "intent-classification",
+            "language-classification",
             "multi-class-classification",
             "multi-label-classification",
             "natural-language-inference",
+            "offense-detection",
+            "relation-extraction",
             "semantic-similarity-classification",
             "sentiment-classification",
+            "token-classification",
             "topic-classification",
+            "word-sense-disambiguation",
             "other"
         ]
     },
@@ -63,9 +131,9 @@
         "description": "information or text retrieval tasks",
         "options": [
             "document-retrieval",
-            "utterance-retrieval",
             "entity-linking-retrieval",
             "fact-checking-retrieval",
+            "utterance-retrieval",
             "other"
         ]
     },
@@ -74,12 +142,6 @@
         "options": [
             "semantic-similarity-scoring",
             "sentiment-scoring",
-            "other"
-        ]
-    },
-    "other": {
-        "description": "other task family not mentioned here",
-        "options": [
             "other"
         ]
     }
