@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Callable, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
 import streamlit as st
 import yaml
@@ -85,6 +85,21 @@ def multiselect(
     return w.multiselect(markdown, valid_set, default=valid_values, format_func=format_func)
 
 
+def validate_dict(state_dict: Dict) -> str:
+    try:
+        DatasetMetadata(**state_dict)
+        valid = "✔️ This is a valid tagset! 🤗"
+    except Exception as e:
+        valid = f"""
+🙁 This is an invalid tagset, here are the errors in it:
+```
+{e}
+```
+You're _very_ welcome to fix these issues and submit a new PR on [`datasets`](https://github.com/huggingface/datasets/)
+        """
+    return valid
+
+
 def new_state():
     return {
         "task_categories": [],
@@ -155,17 +170,7 @@ if rightbtn.button("flush state"):
     st.experimental_set_query_params()
 
 if preloaded_id is not None and initial_state is not None:
-    try:
-        DatasetMetadata(**initial_state)
-        valid = "✔️ This is a valid tagset!"
-    except Exception as e:
-        valid = f"""
-🙁 This is an invalid tagset, here are the errors in it:
-```
-{e}
-```
-You're _very_ welcome to fix these issues and submit a new PR on [`datasets`](https://github.com/huggingface/datasets/)
-        """
+    valid = validate_dict(initial_state)
     st.sidebar.markdown(
         f"""
 ---
@@ -323,13 +328,8 @@ state["size_categories"] = [
 ########################
 ## Show results
 ########################
-try:
-    DatasetMetadata(**state)
-    valid = "✔ Validated! Copy it into your dataset's `README.md` header! 🤗 "
-except Exception as e:
-    valid = f"""🙁 Could not validate:
-    ```{e}```
-    """
+
+valid = validate_dict(state)
 rightcol.markdown(
     f"""
 ### Finalized tag set
@@ -339,5 +339,15 @@ rightcol.markdown(
 ```yaml
 {yaml.dump(state)}
 ```
+---
+#### Arbitrary yaml validator
+
+This is a standalone tool, it is useful to check for errors on an existing tagset or modifying directly the text rather than the UI on the left.
 """,
 )
+
+yamlblock = rightcol.text_area("Input your yaml here")
+if yamlblock.strip() != "":
+    inputdict = yaml.safe_load(yamlblock)
+    valid = validate_dict(inputdict)
+    rightcol.markdown(valid)
