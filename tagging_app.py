@@ -419,8 +419,20 @@ elif num_examples < 100000:
     size_cat = "10K<n<100K"
 elif num_examples < 1000000:
     size_cat = "100K<n<1M"
+elif num_examples < 10000000:
+    size_cat = "1M<n<10M"
+elif num_examples < 100000000:
+    size_cat = "10M<n<100M"
+elif num_examples < 1000000000:
+    size_cat = "100M<n<1B"
+elif num_examples < 10000000000:
+    size_cat = "1B<n<10B"
+elif num_examples < 100000000000:
+    size_cat = "10B<n<100B"
+elif num_examples < 1000000000000:
+    size_cat = "100B<n<1T"
 else:
-    size_cat = "n>1M"
+    size_cat = "n>1T"
 
 res = {
     "task_categories": task_categories,
