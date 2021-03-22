@@ -4,6 +4,7 @@ from typing import Callable, List, Tuple
 
 import streamlit as st
 import yaml
+from datasets.utils.metadata_validator import DatasetMetadata
 
 st.set_page_config(
     page_title="HF Dataset Tagging App",
@@ -128,31 +129,52 @@ Beware that clicking pre-load will overwrite the current state!
 )
 
 
-qp = st.experimental_get_query_params()
-preload = qp.get("preload_dataset", list())
+queryparams = st.experimental_get_query_params()
+preload = queryparams.get("preload_dataset", list())
 preloaded_id = None
+initial_state = None
 did_index = 0
 if len(preload) == 1 and preload[0] in all_dataset_ids:
     preloaded_id, *_ = preload
-    state = existing_tag_sets[preloaded_id] or new_state()
+    initial_state = existing_tag_sets.get(preloaded_id)
+    state = initial_state or new_state()
     did_index = all_dataset_ids.index(preloaded_id)
 
-did = st.sidebar.selectbox(label="Choose dataset to load tag set from", options=all_dataset_ids, index=did_index)
-
+preloaded_id = st.sidebar.selectbox(
+    label="Choose dataset to load tag set from", options=all_dataset_ids, index=did_index
+)
 leftbtn, rightbtn = st.sidebar.beta_columns(2)
-if leftbtn.button("pre-load tagset"):
-    state = existing_tag_sets[did] or new_state()
-    st.experimental_set_query_params(preload_dataset=did)
+if leftbtn.button("pre-load"):
+    initial_state = existing_tag_sets[preloaded_id]
+    state = initial_state or new_state()
+    st.experimental_set_query_params(preload_dataset=preloaded_id)
 if rightbtn.button("flush state"):
     state = new_state()
+    initial_state = None
+    preloaded_id = None
     st.experimental_set_query_params()
 
-if preloaded_id is not None:
+if preloaded_id is not None and initial_state is not None:
+    try:
+        DatasetMetadata(**initial_state)
+        valid = "✔️ This is a valid tagset!"
+    except Exception as e:
+        valid = f"""
+🙁 This is an invalid tagset, here are the errors in it:
+```
+{e}
+```
+You're _very_ welcome to fix these issues and submit a new PR on [`datasets`](https://github.com/huggingface/datasets/)
+        """
     st.sidebar.markdown(
         f"""
-Took [`{preloaded_id}`](https://huggingface.co/datasets/{preloaded_id}) as base tagset:
+---
+The current base tagset is [`{preloaded_id}`](https://huggingface.co/datasets/{preloaded_id})
+{valid}
+Here is the matching yaml block:
+
 ```yaml
-{yaml.dump(state)}
+{yaml.dump(initial_state)}
 ```
 """
     )
@@ -162,7 +184,7 @@ leftcol, _, rightcol = st.beta_columns([12, 1, 12])
 
 
 leftcol.markdown("### Supported tasks")
-task_categories = multiselect(
+state["task_categories"] = multiselect(
     leftcol,
     "Task category",
     "What categories of task does the dataset support?",
@@ -171,27 +193,27 @@ task_categories = multiselect(
     format_func=lambda tg: f"{tg}: {task_set[tg]['description']}",
 )
 task_specifics = []
-for tg in task_categories:
-    task_specs = multiselect(
+for tg in state["task_categories"]:
+    specs = multiselect(
         leftcol,
-        "Specific tasks",
-        f"What specific *{tg}* tasks does the dataset support?",
-        values=[ts for ts in state["task_ids"] if ts in task_set[tg]["options"]],
+        f"Specific _{tg}_ tasks",
+        f"What specific tasks does the dataset support?",
+        values=[ts for ts in (state["task_ids"] or []) if ts in task_set[tg]["options"]],
         valid_set=task_set[tg]["options"],
     )
-    if "other" in task_specs:
+    if "other" in specs:
         other_task = st.text_input(
             "You selected 'other' task. Please enter a short hyphen-separated description for the task:",
             value="my-task-description",
         )
         st.write(f"Registering {tg}-other-{other_task} task")
-        task_specs[task_specs.index("other")] = f"{tg}-other-{other_task}"
-    task_specifics += task_specs
+        specs[specs.index("other")] = f"{tg}-other-{other_task}"
+    task_specifics += specs
+state["task_ids"] = task_specifics
 
 
 leftcol.markdown("### Languages")
-
-multilinguality = multiselect(
+state["multilinguality"] = multiselect(
     leftcol,
     "Monolingual?",
     "Does the dataset contain more than one language?",
@@ -200,16 +222,15 @@ multilinguality = multiselect(
     format_func=lambda m: f"{m} : {multilinguality_set[m]}",
 )
 
-if "other" in multilinguality:
+if "other" in state["multilinguality"]:
     other_multilinguality = st.text_input(
         "You selected 'other' type of multilinguality. Please enter a short hyphen-separated description:",
         value="my-multilinguality",
     )
     st.write(f"Registering other-{other_multilinguality} multilinguality")
-    multilinguality[multilinguality.index("other")] = f"other-{other_multilinguality}"
+    state["multilinguality"][state["multilinguality"].index("other")] = f"other-{other_multilinguality}"
 
-
-languages = multiselect(
+state["languages"] = multiselect(
     leftcol,
     "Languages",
     "What languages are represented in the dataset?",
@@ -220,14 +241,14 @@ languages = multiselect(
 
 
 leftcol.markdown("### Dataset creators")
-language_creators = multiselect(
+state["language_creators"] = multiselect(
     leftcol,
     "Data origin",
     "Where does the text in the dataset come from?",
     values=state["language_creators"],
     valid_set=creator_set["language"],
 )
-annotations_creators = multiselect(
+state["annotations_creators"] = multiselect(
     leftcol,
     "Annotations origin",
     "Where do the annotations in the dataset come from?",
@@ -236,7 +257,7 @@ annotations_creators = multiselect(
 )
 
 
-licenses = multiselect(
+state["licenses"] = multiselect(
     leftcol,
     "Licenses",
     "What licenses is the dataset under?",
@@ -244,13 +265,13 @@ licenses = multiselect(
     values=state["licenses"],
     format_func=lambda l: f"{l} : {license_set[l]}",
 )
-if "other" in licenses:
+if "other" in state["licenses"]:
     other_license = st.text_input(
         "You selected 'other' type of license. Please enter a short hyphen-separated description:",
         value="my-license",
     )
     st.write(f"Registering other-{other_license} license")
-    licenses[licenses.index("other")] = f"other-{other_license}"
+    state["licenses"][state["licenses"].index("other")] = f"other-{other_license}"
 
 # link to supported datasets
 pre_select_ext_a = []
@@ -258,17 +279,16 @@ if "original" in state["source_datasets"]:
     pre_select_ext_a += ["original"]
 if any([p.startswith("extended") for p in state["source_datasets"]]):
     pre_select_ext_a += ["extended"]
-extended = multiselect(
+state["extended"] = multiselect(
     leftcol,
     "Relations to existing work",
     "Does the dataset contain original data and/or was it extended from other datasets?",
     values=pre_select_ext_a,
     valid_set=["original", "extended"],
 )
-source_datasets = ["original"] if "original" in extended else []
+state["source_datasets"] = ["original"] if "original" in state["extended"] else []
 
-# todo: show bad tags
-if "extended" in extended:
+if "extended" in state["extended"]:
     pre_select_ext_b = [p.split("|")[1] for p in state["source_datasets"] if p.startswith("extended")]
     extended_sources = multiselect(
         leftcol,
@@ -284,43 +304,40 @@ if "extended" in extended:
         )
         st.write(f"Registering other-{other_extended_sources} dataset")
         extended_sources[extended_sources.index("other")] = f"other-{other_extended_sources}"
-    source_datasets += [f"extended|{src}" for src in extended_sources]
+    state["source_datasets"] += [f"extended|{src}" for src in extended_sources]
 
 size_cats = ["unknown", "n<1K", "1K<n<10K", "10K<n<100K", "100K<n<1M", "n>1M"]
 current_size_cats = state.get("size_categories") or ["unknown"]
 ok, nonok = split_known(current_size_cats, size_cats)
 if len(nonok) > 0:
     leftcol.markdown(f"**Found bad codes in existing tagset**:\n{nonok}")
-size_category = leftcol.selectbox(
-    "What is the size category of the dataset?",
-    options=size_cats,
-    index=size_cats.index(ok[0]) if len(ok) > 0 else 0,
-)
+state["size_categories"] = [
+    leftcol.selectbox(
+        "What is the size category of the dataset?",
+        options=size_cats,
+        index=size_cats.index(ok[0]) if len(ok) > 0 else 0,
+    )
+]
 
 
 ########################
 ## Show results
 ########################
-yamlblock = yaml.dump(
-    {
-        "task_categories": task_categories,
-        "task_ids": task_specifics,
-        "multilinguality": multilinguality,
-        "languages": languages,
-        "language_creators": language_creators,
-        "annotations_creators": annotations_creators,
-        "source_datasets": source_datasets,
-        "size_categories": size_category,
-        "licenses": licenses,
-    }
-)
+try:
+    DatasetMetadata(**state)
+    valid = "✔ Validated! Copy it into your dataset's `README.md` header! 🤗 "
+except Exception as e:
+    valid = f"""🙁 Could not validate:
+    ```{e}```
+    """
 rightcol.markdown(
     f"""
 ### Finalized tag set
 
-Copy it into your dataset's `README.md` header! 🤗 
+{valid}
 
 ```yaml
-{yamlblock}
-```""",
+{yaml.dump(state)}
+```
+""",
 )
