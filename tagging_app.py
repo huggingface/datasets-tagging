@@ -320,7 +320,7 @@ if "extended" in state["extended"]:
         extended_sources[extended_sources.index("other")] = f"other-{other_extended_sources}"
     state["source_datasets"] += [f"extended|{src}" for src in extended_sources]
 
-size_cats = ["unknown", "n<1K", "1K<n<10K", "10K<n<100K", "100K<n<1M", "n>1M"]
+size_cats = ["unknown", "n<1K", "1K<n<10K", "10K<n<100K", "100K<n<1M", "n>1M", ...]
 current_size_cats = state.get("size_categories") or ["unknown"]
 ok, nonok = split_known(current_size_cats, size_cats)
 if len(nonok) > 0:
