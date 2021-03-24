@@ -5,9 +5,14 @@ from typing import Callable, Dict, List, Tuple
 import langcodes as lc
 import streamlit as st
 import yaml
-from datasets.utils.metadata import (DatasetMetadata, known_creators,
-                                     known_licenses, known_multilingualities,
-                                     known_size_categories, known_task_ids)
+from datasets.utils.metadata import (
+    DatasetMetadata,
+    known_creators,
+    known_licenses,
+    known_multilingualities,
+    known_size_categories,
+    known_task_ids,
+)
 
 st.set_page_config(
     page_title="HF Dataset Tagging App",
@@ -173,21 +178,21 @@ state["task_categories"] = multiselect(
     format_func=lambda tg: f"{tg}: {known_task_ids[tg]['description']}",
 )
 task_specifics = []
-for tg in state["task_categories"]:
+for task_category in state["task_categories"]:
     specs = multiselect(
         leftcol,
-        f"Specific _{tg}_ tasks",
+        f"Specific _{task_category}_ tasks",
         f"What specific tasks does the dataset support?",
-        values=[ts for ts in (state["task_ids"] or []) if ts in known_task_ids[tg]["options"]],
-        valid_set=known_task_ids[tg]["options"],
+        values=[ts for ts in (state["task_ids"] or []) if ts in known_task_ids[task_category]["options"]],
+        valid_set=known_task_ids[task_category]["options"],
     )
     if "other" in specs:
-        other_task = st.text_input(
+        other_task = leftcol.text_input(
             "You selected 'other' task. Please enter a short hyphen-separated description for the task:",
             value="my-task-description",
         )
-        st.write(f"Registering {tg}-other-{other_task} task")
-        specs[specs.index("other")] = f"{tg}-other-{other_task}"
+        leftcol.write(f"Registering {task_category}-other-{other_task} task")
+        specs[specs.index("other")] = f"{task_category}-other-{other_task}"
     task_specifics += specs
 state["task_ids"] = task_specifics
 
@@ -203,11 +208,11 @@ state["multilinguality"] = multiselect(
 )
 
 if "other" in state["multilinguality"]:
-    other_multilinguality = st.text_input(
+    other_multilinguality = leftcol.text_input(
         "You selected 'other' type of multilinguality. Please enter a short hyphen-separated description:",
         value="my-multilinguality",
     )
-    st.write(f"Registering other-{other_multilinguality} multilinguality")
+    leftcol.write(f"Registering other-{other_multilinguality} multilinguality")
     state["multilinguality"][state["multilinguality"].index("other")] = f"other-{other_multilinguality}"
 
 valid_values, invalid_values = list(), list()
@@ -286,11 +291,11 @@ if "extended" in state["extended"]:
         valid_set=all_dataset_ids + ["other"],
     )
     if "other" in extended_sources:
-        other_extended_sources = st.text_input(
+        other_extended_sources = leftcol.text_input(
             "You selected 'other' dataset. Please enter a short hyphen-separated description:",
             value="my-dataset",
         )
-        st.write(f"Registering other-{other_extended_sources} dataset")
+        leftcol.write(f"Registering other-{other_extended_sources} dataset")
         extended_sources[extended_sources.index("other")] = f"other-{other_extended_sources}"
     state["source_datasets"] += [f"extended|{src}" for src in extended_sources]
 
