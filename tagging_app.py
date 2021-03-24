@@ -102,7 +102,7 @@ def validate_dict(w: st.delta_generator.DeltaGenerator, state_dict: Dict):
         w.error(e)
 
 
-def new_state():
+def new_state() -> Dict[str, List]:
     return {
         "task_categories": [],
         "task_ids": [],
@@ -114,6 +114,10 @@ def new_state():
         "size_categories": [],
         "licenses": [],
     }
+
+
+def is_state_empty(state: Dict[str, List]) -> bool:
+    return sum(len(v) if v is not None else 0 for v in state.values()) > 0
 
 
 state = new_state()
@@ -156,7 +160,7 @@ if leftbtn.button("pre-load"):
     initial_state = existing_tag_sets[preloaded_id]
     state = initial_state or new_state()
     st.experimental_set_query_params(preload_dataset=preloaded_id)
-if sum(len(v) if v is not None else 0 for v in state.values()) > 0:
+if is_state_empty(state):
     if rightbtn.button("flush state"):
         state = new_state()
         initial_state = None
@@ -340,7 +344,11 @@ rightcol.markdown(
 
 """
 )
-validate_dict(rightcol, state)
+if is_state_empty(state):
+    rightcol.markdown("❌ This is an invalid tagset: it's empty!")
+else:
+    validate_dict(rightcol, state)
+
 
 rightcol.markdown(
     f"""
