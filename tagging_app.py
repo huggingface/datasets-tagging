@@ -263,7 +263,7 @@ langtags = leftcol.text_area(
     "What languages are represented in the dataset? expected format is BCP47 tags separated for ';' e.g. 'en-US;fr-FR'",
     value=";".join(valid_values),
 )
-state["languages"] = langtags.split(";")
+state["languages"] = langtags.strip().split(";") if langtags.strip() != "" else []
 
 
 #
