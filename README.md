@@ -1,5 +1,5 @@
 # datasets-tagging
-A Streamlit app to add structured tags to the datasets
+A Streamlit app to add structured tags to the datasets - available on line [here!](https://huggingface.co/datasets/tagging)
 
 
 1. `pip install -r requirements.txt`
