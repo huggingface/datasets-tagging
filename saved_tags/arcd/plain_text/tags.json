@@ -1,1 +1,0 @@
-{"task_categories": ["question-answering"], "task_ids": ["closed-domain-qa", "extractive-qa", "open-domain-qa"], "multilinguality": ["monolingual"], "languages": ["ar"], "language_creators": ["crowdsourced", "found"], "annotations_creators": ["crowdsourced"], "source_datasets": ["original", "extended|wikipedia"], "size_categories": ["1K<n<10K"], "licenses": ["mit"]}

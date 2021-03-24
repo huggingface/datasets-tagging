@@ -1,1 +1,0 @@
-{"task_categories": ["conditional-text-generation"], "task_ids": ["machine-translation"], "multilinguality": ["translation"], "languages": ["en", "hi"], "language_creators": ["expert-generated", "found"], "annotations_creators": ["no-annotation"], "source_datasets": ["original"], "size_categories": ["unknown"], "licenses": ["unknown"]}

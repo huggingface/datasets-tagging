@@ -1,1 +1,0 @@
-{"task_categories": ["question-answering"], "task_ids": ["multiple-choice-qa"], "multilinguality": ["monolingual"], "languages": ["en"], "language_creators": ["found"], "annotations_creators": ["crowdsourced"], "source_datasets": ["original"], "size_categories": ["10K<n<100K"], "licenses": ["unknown"]}

@@ -1,1 +1,0 @@
-{"task_categories": ["text-classification"], "task_ids": ["semantic-similarity-classification"], "multilinguality": ["monolingual"], "languages": ["en"], "language_creators": ["found"], "annotations_creators": ["expert-generated"], "source_datasets": ["original"], "size_categories": ["100K<n<1M"], "licenses": ["other-quora-terms-of-service"]}
