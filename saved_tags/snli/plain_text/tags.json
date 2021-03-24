@@ -1,1 +1,0 @@
-{"task_categories": ["text-classification"], "task_ids": ["natural-language-inference"], "multilinguality": ["monolingual"], "languages": ["en"], "language_creators": ["crowdsourced"], "annotations_creators": ["crowdsourced"], "source_datasets": ["original", "extended|other"], "size_categories": ["100K<n<1M"], "licenses": ["cc-by-nc-4.0"]}
