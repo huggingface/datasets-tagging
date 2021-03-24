@@ -5,7 +5,9 @@ from typing import Callable, Dict, List, Tuple
 import langcodes as lc
 import streamlit as st
 import yaml
-from datasets.utils.metadata import DatasetMetadata
+from datasets.utils.metadata import (DatasetMetadata, known_creators,
+                                     known_licenses, known_multilingualities,
+                                     known_size_categories, known_task_ids)
 
 st.set_page_config(
     page_title="HF Dataset Tagging App",
@@ -25,34 +27,6 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
-
-task_set = json.load(open("task_set.json"))
-license_set = json.load(open("license_set.json"))
-
-multilinguality_set = {
-    "monolingual": "contains a single language",
-    "multilingual": "contains multiple languages",
-    "translation": "contains translated or aligned text",
-    "other": "other type of language distribution",
-}
-
-creator_set = {
-    "language": [
-        "found",
-        "crowdsourced",
-        "expert-generated",
-        "machine-generated",
-        "other",
-    ],
-    "annotations": [
-        "found",
-        "crowdsourced",
-        "expert-generated",
-        "machine-generated",
-        "no-annotation",
-        "other",
-    ],
-}
 
 ########################
 ## Helper functions
@@ -117,7 +91,7 @@ def new_state() -> Dict[str, List]:
 
 
 def is_state_empty(state: Dict[str, List]) -> bool:
-    return sum(len(v) if v is not None else 0 for v in state.values()) > 0
+    return sum(len(v) if v is not None else 0 for v in state.values()) == 0
 
 
 state = new_state()
@@ -160,7 +134,7 @@ if leftbtn.button("pre-load"):
     initial_state = existing_tag_sets[preloaded_id]
     state = initial_state or new_state()
     st.experimental_set_query_params(preload_dataset=preloaded_id)
-if is_state_empty(state):
+if not is_state_empty(state):
     if rightbtn.button("flush state"):
         state = new_state()
         initial_state = None
@@ -195,8 +169,8 @@ state["task_categories"] = multiselect(
     "Task category",
     "What categories of task does the dataset support?",
     values=state["task_categories"],
-    valid_set=list(task_set.keys()),
-    format_func=lambda tg: f"{tg}: {task_set[tg]['description']}",
+    valid_set=list(known_task_ids.keys()),
+    format_func=lambda tg: f"{tg}: {known_task_ids[tg]['description']}",
 )
 task_specifics = []
 for tg in state["task_categories"]:
@@ -204,8 +178,8 @@ for tg in state["task_categories"]:
         leftcol,
         f"Specific _{tg}_ tasks",
         f"What specific tasks does the dataset support?",
-        values=[ts for ts in (state["task_ids"] or []) if ts in task_set[tg]["options"]],
-        valid_set=task_set[tg]["options"],
+        values=[ts for ts in (state["task_ids"] or []) if ts in known_task_ids[tg]["options"]],
+        valid_set=known_task_ids[tg]["options"],
     )
     if "other" in specs:
         other_task = st.text_input(
@@ -224,8 +198,8 @@ state["multilinguality"] = multiselect(
     "Monolingual?",
     "Does the dataset contain more than one language?",
     values=state["multilinguality"],
-    valid_set=list(multilinguality_set.keys()),
-    format_func=lambda m: f"{m} : {multilinguality_set[m]}",
+    valid_set=list(known_multilingualities.keys()),
+    format_func=lambda m: f"{m} : {known_multilingualities[m]}",
 )
 
 if "other" in state["multilinguality"]:
@@ -260,14 +234,14 @@ state["language_creators"] = multiselect(
     "Data origin",
     "Where does the text in the dataset come from?",
     values=state["language_creators"],
-    valid_set=creator_set["language"],
+    valid_set=known_creators["language"],
 )
 state["annotations_creators"] = multiselect(
     leftcol,
     "Annotations origin",
     "Where do the annotations in the dataset come from?",
     values=state["annotations_creators"],
-    valid_set=creator_set["annotations"],
+    valid_set=known_creators["annotations"],
 )
 
 
@@ -275,9 +249,9 @@ state["licenses"] = multiselect(
     leftcol,
     "Licenses",
     "What licenses is the dataset under?",
-    valid_set=list(license_set.keys()),
+    valid_set=list(known_licenses.keys()),
     values=state["licenses"],
-    format_func=lambda l: f"{l} : {license_set[l]}",
+    format_func=lambda l: f"{l} : {known_licenses[l]}",
 )
 if "other" in state["licenses"]:
     other_license = st.text_input(
@@ -320,16 +294,15 @@ if "extended" in state["extended"]:
         extended_sources[extended_sources.index("other")] = f"other-{other_extended_sources}"
     state["source_datasets"] += [f"extended|{src}" for src in extended_sources]
 
-size_cats = ["unknown", "n<1K", "1K<n<10K", "10K<n<100K", "100K<n<1M", "n>1M", ...]
 current_size_cats = state.get("size_categories") or ["unknown"]
-ok, nonok = split_known(current_size_cats, size_cats)
+ok, nonok = split_known(current_size_cats, known_size_categories)
 if len(nonok) > 0:
     leftcol.markdown(f"**Found bad codes in existing tagset**:\n{nonok}")
 state["size_categories"] = [
     leftcol.selectbox(
         "What is the size category of the dataset?",
-        options=size_cats,
-        index=size_cats.index(ok[0]) if len(ok) > 0 else 0,
+        options=known_size_categories,
+        index=known_size_categories.index(ok[0]) if len(ok) > 0 else 0,
     )
 ]
 
