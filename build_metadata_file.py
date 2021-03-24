@@ -12,6 +12,8 @@ from typing import Dict
 
 import yaml
 
+from apputils import new_state
+
 
 def metadata_from_readme(f: Path) -> Dict:
     with f.open() as fi:
@@ -25,10 +27,10 @@ def metadata_from_readme(f: Path) -> Dict:
 def load_ds_datas():
     drepo = Path("datasets")
     if drepo.exists() and drepo.is_dir():
-        check_call(["git", "pull"], cwd=str((Path.cwd() / "datasets").absolute()))
+        check_call(["git", "pull"], cwd=drepo)
     else:
         check_call(["git", "clone", "https://github.com/huggingface/datasets.git"])
-    head_sha = check_output(["git", "rev-parse", "HEAD"])
+    head_sha = check_output(["git", "rev-parse", "HEAD"], cwd=drepo)
 
     datasets_md = dict()
 
@@ -38,6 +40,8 @@ def load_ds_datas():
             metadata = metadata_from_readme(ddir / "README.md")
         except:
             metadata = None
+        if metadata is None or len(metadata) == 0:
+            metadata = new_state()
 
         try:
             with (ddir / "dataset_infos.json").open() as fi:
@@ -45,8 +49,7 @@ def load_ds_datas():
         except:
             infos = None
 
-        if metadata is not None and len(metadata) > 0:
-            datasets_md[ddir.name] = dict(metadata=metadata, infos=infos)
+        datasets_md[ddir.name] = dict(metadata=metadata, infos=infos)
     return head_sha.decode().strip(), datasets_md
 
 

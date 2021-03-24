@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 from typing import Callable, Dict, List, Tuple
 
@@ -13,6 +14,8 @@ from datasets.utils.metadata import (
     known_size_categories,
     known_task_ids,
 )
+
+from apputils import new_state
 
 st.set_page_config(
     page_title="HF Dataset Tagging App",
@@ -38,7 +41,7 @@ st.markdown(
 ########################
 
 
-def load_ds_datas():
+def load_ds_datas() -> Dict[str, Dict[str, Dict]]:
     metada_exports = sorted(
         [f for f in Path.cwd().iterdir() if f.name.startswith("metadata_")],
         key=lambda f: f.lstat().st_mtime,
@@ -47,6 +50,7 @@ def load_ds_datas():
     if len(metada_exports) == 0:
         raise ValueError("need to run ./build_metada_file.py at least once")
     with metada_exports[0].open() as fi:
+        logging.info(f"loaded {metada_exports[0]}")
         return json.load(fi)
 
 
@@ -81,18 +85,32 @@ def validate_dict(w: st.delta_generator.DeltaGenerator, state_dict: Dict):
         w.error(e)
 
 
-def new_state() -> Dict[str, List]:
-    return {
-        "task_categories": [],
-        "task_ids": [],
-        "multilinguality": [],
-        "languages": [],
-        "language_creators": [],
-        "annotations_creators": [],
-        "source_datasets": [],
-        "size_categories": [],
-        "licenses": [],
-    }
+def map_num_examples_to_size_categories(n: int) -> str:
+    if n <= 0:
+        size_cat = "unknown"
+    elif n < 1000:
+        size_cat = "n<1K"
+    elif n < 10000:
+        size_cat = "1K<n<10K"
+    elif n < 100000:
+        size_cat = "10K<n<100K"
+    elif n < 1000000:
+        size_cat = "100K<n<1M"
+    elif n < 10000000:
+        size_cat = "1M<n<10M"
+    elif n < 100000000:
+        size_cat = "10M<n<100M"
+    elif n < 1000000000:
+        size_cat = "100M<n<1B"
+    elif n < 10000000000:
+        size_cat = "1B<n<10B"
+    elif n < 100000000000:
+        size_cat = "10B<n<100B"
+    elif n < 1000000000000:
+        size_cat = "100B<n<1T"
+    else:
+        size_cat = "n>1T"
+    return size_cat
 
 
 def is_state_empty(state: Dict[str, List]) -> bool:
@@ -101,8 +119,9 @@ def is_state_empty(state: Dict[str, List]) -> bool:
 
 state = new_state()
 datasets_md = load_ds_datas()
-existing_tag_sets = {name: mds["metadata"] for name, mds in datasets_md.items()}
-all_dataset_ids = list(existing_tag_sets.keys())
+dataset_ids = list(datasets_md.keys())
+dataset_id_to_metadata = {name: mds["metadata"] for name, mds in datasets_md.items()}
+dataset_id_to_infos = {name: mds["infos"] for name, mds in datasets_md.items()}
 
 
 ########################
@@ -124,19 +143,26 @@ queryparams = st.experimental_get_query_params()
 preload = queryparams.get("preload_dataset", list())
 preloaded_id = None
 initial_state = None
-did_index = 0
-if len(preload) == 1 and preload[0] in all_dataset_ids:
+initial_infos, initial_info_cfg = None, None
+dataset_selector_index = 0
+
+if len(preload) == 1 and preload[0] in dataset_ids:
     preloaded_id, *_ = preload
-    initial_state = existing_tag_sets.get(preloaded_id)
+    initial_state = dataset_id_to_metadata.get(preloaded_id)
+    initial_infos = dataset_id_to_infos.get(preloaded_id)
+    initial_info_cfg = next(iter(initial_infos)) if initial_infos is not None else None  # pick first available config
     state = initial_state or new_state()
-    did_index = all_dataset_ids.index(preloaded_id)
+    dataset_selector_index = dataset_ids.index(preloaded_id)
 
 preloaded_id = st.sidebar.selectbox(
-    label="Choose dataset to load tag set from", options=all_dataset_ids, index=did_index
+    label="Choose dataset to load tag set from", options=dataset_ids, index=dataset_selector_index
 )
+
 leftbtn, rightbtn = st.sidebar.beta_columns(2)
 if leftbtn.button("pre-load"):
-    initial_state = existing_tag_sets[preloaded_id]
+    initial_state = dataset_id_to_metadata[preloaded_id]
+    initial_infos = dataset_id_to_infos[preloaded_id]
+    initial_info_cfg = next(iter(initial_infos))  # pick first available config
     state = initial_state or new_state()
     st.experimental_set_query_params(preload_dataset=preloaded_id)
 if not is_state_empty(state):
@@ -168,6 +194,9 @@ Here is the matching yaml block:
 leftcol, _, rightcol = st.beta_columns([12, 1, 12])
 
 
+#
+# TASKS
+#
 leftcol.markdown("### Supported tasks")
 state["task_categories"] = multiselect(
     leftcol,
@@ -197,6 +226,9 @@ for task_category in state["task_categories"]:
 state["task_ids"] = task_specifics
 
 
+#
+# LANGUAGES
+#
 leftcol.markdown("### Languages")
 state["multilinguality"] = multiselect(
     leftcol,
@@ -233,6 +265,10 @@ langtags = leftcol.text_area(
 )
 state["languages"] = langtags.split(";")
 
+
+#
+# DATASET CREATORS & ORIGINS
+#
 leftcol.markdown("### Dataset creators")
 state["language_creators"] = multiselect(
     leftcol,
@@ -250,6 +286,9 @@ state["annotations_creators"] = multiselect(
 )
 
 
+#
+# LICENSES
+#
 state["licenses"] = multiselect(
     leftcol,
     "Licenses",
@@ -266,7 +305,10 @@ if "other" in state["licenses"]:
     st.write(f"Registering other-{other_license} license")
     state["licenses"][state["licenses"].index("other")] = f"other-{other_license}"
 
-# link to supported datasets
+
+#
+# LINK TO SUPPORTED DATASETS
+#
 pre_select_ext_a = []
 if "original" in state["source_datasets"]:
     pre_select_ext_a += ["original"]
@@ -288,7 +330,7 @@ if "extended" in state["extended"]:
         "Linked datasets",
         "Which other datasets does this one use data from?",
         values=pre_select_ext_b,
-        valid_set=all_dataset_ids + ["other"],
+        valid_set=dataset_ids + ["other"],
     )
     if "other" in extended_sources:
         other_extended_sources = leftcol.text_input(
@@ -299,17 +341,23 @@ if "extended" in state["extended"]:
         extended_sources[extended_sources.index("other")] = f"other-{other_extended_sources}"
     state["source_datasets"] += [f"extended|{src}" for src in extended_sources]
 
+
+#
+# SIZE CATEGORY
+#
+leftcol.markdown("### Size category")
+logging.info(initial_infos[initial_info_cfg]["splits"] if initial_infos is not None else 0)
+initial_num_examples = (
+    sum([dct.get("num_examples", 0) for _split, dct in initial_infos[initial_info_cfg].get("splits", dict()).items()])
+    if initial_infos is not None
+    else -1
+)
+initial_size_cats = map_num_examples_to_size_categories(initial_num_examples)
+leftcol.markdown(f"Computed size category from automatically generated dataset info to: `{initial_size_cats}`")
 current_size_cats = state.get("size_categories") or ["unknown"]
 ok, nonok = split_known(current_size_cats, known_size_categories)
 if len(nonok) > 0:
     leftcol.markdown(f"**Found bad codes in existing tagset**:\n{nonok}")
-state["size_categories"] = [
-    leftcol.selectbox(
-        "What is the size category of the dataset?",
-        options=known_size_categories,
-        index=known_size_categories.index(ok[0]) if len(ok) > 0 else 0,
-    )
-]
 
 
 ########################
