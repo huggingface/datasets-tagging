@@ -2,9 +2,10 @@ import json
 from pathlib import Path
 from typing import Callable, Dict, List, Tuple
 
+import langcodes as lc
 import streamlit as st
 import yaml
-from datasets.utils.metadata_validator import DatasetMetadata
+from datasets.utils.metadata import DatasetMetadata
 
 st.set_page_config(
     page_title="HF Dataset Tagging App",
@@ -13,9 +14,20 @@ st.set_page_config(
     initial_sidebar_state="auto",
 )
 
+# XXX: restyling errors as streamlit does not respect whitespaces on `st.error` and doesn't scroll horizontally, which
+#   generally makes things easier when reading error reports
+st.markdown(
+    """
+<style>
+    div[role=alert] { overflow-x: scroll}
+    div.stAlert p { white-space: pre }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 task_set = json.load(open("task_set.json"))
 license_set = json.load(open("license_set.json"))
-language_set_restricted = json.load(open("language_set.json"))
 
 multilinguality_set = {
     "monolingual": "contains a single language",
@@ -74,30 +86,20 @@ def multiselect(
     format_func: Callable = str,
 ):
     valid_values, invalid_values = split_known(values, valid_set)
-    w.markdown(
-        """
-#### {title}
-{errors}
-""".format(
-            title=title, errors="" if len(invalid_values) == 0 else f"_Found invalid values:_ `{invalid_values}`"
-        )
-    )
+    w.markdown(f"#### {title}")
+    if len(invalid_values) > 0:
+        w.markdown("Found the following invalid values:")
+        w.error(invalid_values)
     return w.multiselect(markdown, valid_set, default=valid_values, format_func=format_func)
 
 
-def validate_dict(state_dict: Dict) -> str:
+def validate_dict(w: st.delta_generator.DeltaGenerator, state_dict: Dict):
     try:
         DatasetMetadata(**state_dict)
-        valid = "✔️ This is a valid tagset! 🤗"
+        w.markdown("✅ This is a valid tagset! 🤗")
     except Exception as e:
-        valid = f"""
-🙁 This is an invalid tagset, here are the errors in it:
-```
-{e}
-```
-You're _very_ welcome to fix these issues and submit a new PR on [`datasets`](https://github.com/huggingface/datasets/)
-        """
-    return valid
+        w.markdown("❌ This is an invalid tagset, here are the errors in it:")
+        w.error(e)
 
 
 def new_state():
@@ -131,15 +133,6 @@ st.sidebar.markdown(
 
 This app aims to make it easier to add structured tags to the datasets present in the library.
 
-Each configuration requires its own tasks, as these often correspond to distinct sub-tasks. However, we provide the opportunity
-to pre-load the tag sets from another dataset or configuration to avoid too much redundancy.
-
-The tag sets are saved in JSON format, but you can print a YAML version in the right-most column to copy-paste to the config README.md
-
-### Preloading an existing tag set
-
-You can load an existing tag set to get started if you want.
-Beware that clicking pre-load will overwrite the current state!
 """
 )
 
@@ -163,19 +156,23 @@ if leftbtn.button("pre-load"):
     initial_state = existing_tag_sets[preloaded_id]
     state = initial_state or new_state()
     st.experimental_set_query_params(preload_dataset=preloaded_id)
-if rightbtn.button("flush state"):
-    state = new_state()
-    initial_state = None
-    preloaded_id = None
-    st.experimental_set_query_params()
+if sum(len(v) if v is not None else 0 for v in state.values()) > 0:
+    if rightbtn.button("flush state"):
+        state = new_state()
+        initial_state = None
+        preloaded_id = None
+        st.experimental_set_query_params()
 
 if preloaded_id is not None and initial_state is not None:
-    valid = validate_dict(initial_state)
     st.sidebar.markdown(
         f"""
 ---
 The current base tagset is [`{preloaded_id}`](https://huggingface.co/datasets/{preloaded_id})
-{valid}
+"""
+    )
+    validate_dict(st.sidebar, initial_state)
+    st.sidebar.markdown(
+        f"""
 Here is the matching yaml block:
 
 ```yaml
@@ -235,15 +232,23 @@ if "other" in state["multilinguality"]:
     st.write(f"Registering other-{other_multilinguality} multilinguality")
     state["multilinguality"][state["multilinguality"].index("other")] = f"other-{other_multilinguality}"
 
-state["languages"] = multiselect(
-    leftcol,
-    "Languages",
-    "What languages are represented in the dataset?",
-    values=state["languages"],
-    valid_set=list(language_set_restricted.keys()),
-    format_func=lambda m: f"{m} : {language_set_restricted[m]}",
-)
+valid_values, invalid_values = list(), list()
+for langtag in state["languages"]:
+    try:
+        lc.get(langtag)
+        valid_values.append(langtag)
+    except:
+        invalid_values.append(langtag)
+leftcol.markdown("#### Languages")
+if len(invalid_values) > 0:
+    leftcol.markdown("Found the following invalid values:")
+    leftcol.error(invalid_values)
 
+langtags = leftcol.text_area(
+    "What languages are represented in the dataset? expected format is BCP47 tags separated for ';' e.g. 'en-US;fr-FR'",
+    value=";".join(valid_values),
+)
+state["languages"] = langtags.split(";")
 
 leftcol.markdown("### Dataset creators")
 state["language_creators"] = multiselect(
@@ -329,12 +334,16 @@ state["size_categories"] = [
 ## Show results
 ########################
 
-valid = validate_dict(state)
 rightcol.markdown(
     f"""
 ### Finalized tag set
 
-{valid}
+"""
+)
+validate_dict(rightcol, state)
+
+rightcol.markdown(
+    f"""
 
 ```yaml
 {yaml.dump(state)}
@@ -349,5 +358,4 @@ This is a standalone tool, it is useful to check for errors on an existing tagse
 yamlblock = rightcol.text_area("Input your yaml here")
 if yamlblock.strip() != "":
     inputdict = yaml.safe_load(yamlblock)
-    valid = validate_dict(inputdict)
-    rightcol.markdown(valid)
+    validate_dict(rightcol, inputdict)
