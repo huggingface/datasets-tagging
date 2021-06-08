@@ -1,4 +1,4 @@
 pyyaml
-datasets
+datasets==1.7.0
 streamlit
 langcodes[data]
