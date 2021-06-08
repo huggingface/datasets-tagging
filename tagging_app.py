@@ -352,6 +352,8 @@ current_size_cats = state.get("size_categories") or ["unknown"]
 ok, nonok = split_known(current_size_cats, known_size_categories)
 if len(nonok) > 0:
     leftcol.markdown(f"**Found bad codes in existing tagset**:\n{nonok}")
+else:
+    state["size_categories"] = [initial_size_cats]
 
 
 ########################
