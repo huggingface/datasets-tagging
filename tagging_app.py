@@ -314,17 +314,16 @@ if "original" in state["source_datasets"]:
     pre_select_ext_a += ["original"]
 if any([p.startswith("extended") for p in state["source_datasets"]]):
     pre_select_ext_a += ["extended"]
-state["extended"] = multiselect(
+state["source_datasets"] = multiselect(
     leftcol,
     "Relations to existing work",
     "Does the dataset contain original data and/or was it extended from other datasets?",
     values=pre_select_ext_a,
     valid_set=["original", "extended"],
 )
-state["source_datasets"] = ["original"] if "original" in state["extended"] else []
 
-if "extended" in state["extended"]:
-    pre_select_ext_b = [p.split("|")[1] for p in state["source_datasets"] if p.startswith("extended")]
+if "extended" in state["source_datasets"]:
+    pre_select_ext_b = [p.split("|")[1] for p in state["source_datasets"] if p.startswith("extended|")]
     extended_sources = multiselect(
         leftcol,
         "Linked datasets",
@@ -332,13 +331,8 @@ if "extended" in state["extended"]:
         values=pre_select_ext_b,
         valid_set=dataset_ids + ["other"],
     )
-    if "other" in extended_sources:
-        other_extended_sources = leftcol.text_input(
-            "You selected 'other' dataset. Please enter a short hyphen-separated description:",
-            value="my-dataset",
-        )
-        leftcol.write(f"Registering other-{other_extended_sources} dataset")
-        extended_sources[extended_sources.index("other")] = f"other-{other_extended_sources}"
+    # flush placeholder
+    state["source_datasets"].remove("extended")
     state["source_datasets"] += [f"extended|{src}" for src in extended_sources]
 
 
@@ -358,6 +352,8 @@ current_size_cats = state.get("size_categories") or ["unknown"]
 ok, nonok = split_known(current_size_cats, known_size_categories)
 if len(nonok) > 0:
     leftcol.markdown(f"**Found bad codes in existing tagset**:\n{nonok}")
+else:
+    state["size_categories"] = [initial_size_cats]
 
 
 ########################
