@@ -193,6 +193,15 @@ Here is the matching yaml block:
 
 leftcol, _, rightcol = st.beta_columns([12, 1, 12])
 
+#
+# DATASET NAME
+#
+leftcol.markdown("### Dataset name")
+state["pretty_name"] = leftcol.text_area(
+    "Pick a nice descriptive name for the dataset",
+)
+
+
 
 #
 # TASKS
