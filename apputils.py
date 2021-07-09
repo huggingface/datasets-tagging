@@ -12,4 +12,5 @@ def new_state() -> Dict[str, List]:
         "source_datasets": [],
         "size_categories": [],
         "licenses": [],
+        "pretty_name": null,
     }
