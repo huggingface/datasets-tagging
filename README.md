@@ -1,3 +1,13 @@
+---
+title: Datasets Tagging
+emoji: 🤗
+colorFrom: pink
+colorTo: blue
+sdk: streamlit
+app_file: tagging_app.py
+pinned: false
+---
+
 # datasets-tagging
 A Streamlit app to add structured tags to the datasets - available on line [here!](https://huggingface.co/datasets/tagging)
 
