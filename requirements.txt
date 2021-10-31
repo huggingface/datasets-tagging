@@ -1,4 +1,4 @@
 pyyaml
 datasets==1.9.0
-streamlit
+streamlit>=0.88.0
 langcodes[data]

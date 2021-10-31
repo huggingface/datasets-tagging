@@ -158,7 +158,7 @@ preloaded_id = st.sidebar.selectbox(
     label="Choose dataset to load tag set from", options=dataset_ids, index=dataset_selector_index
 )
 
-leftbtn, rightbtn = st.sidebar.beta_columns(2)
+leftbtn, rightbtn = st.sidebar.columns(2)
 if leftbtn.button("pre-load"):
     initial_state = dataset_id_to_metadata[preloaded_id]
     initial_infos = dataset_id_to_infos[preloaded_id]
@@ -191,7 +191,7 @@ Here is the matching yaml block:
     )
 
 
-leftcol, _, rightcol = st.beta_columns([12, 1, 12])
+leftcol, _, rightcol = st.columns([12, 1, 12])
 
 #
 # DATASET NAME
