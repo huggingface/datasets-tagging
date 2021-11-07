@@ -8,7 +8,7 @@ app_file: tagging_app.py
 pinned: false
 ---
 
-![deployment](https://github.com/huggingface/datasets-tagging/actions/workflows/deploy.yml/badge.svg)
+[![deploy](https://github.com/huggingface/datasets-tagging/actions/workflows/deploy.yml/badge.svg)](https://github.com/huggingface/datasets-tagging/actions/workflows/deploy.yml)
 
 # 🤗 Datasets Tagging
 A Streamlit app to add structured tags to a dataset card.
