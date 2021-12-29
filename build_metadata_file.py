@@ -17,7 +17,7 @@ from apputils import new_state
 
 def metadata_from_readme(f: Path) -> Dict:
     with f.open() as fi:
-        content = [line.strip() for line in fi]
+        content = [line.rstrip() for line in fi]
 
     if content[0] == "---" and "---" in content[1:]:
         yamlblock = "\n".join(content[1 : content[1:].index("---") + 1])
