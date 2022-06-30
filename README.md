@@ -8,7 +8,12 @@ app_file: tagging_app.py
 pinned: false
 ---
 
-[![deploy](https://github.com/huggingface/datasets-tagging/actions/workflows/deploy.yml/badge.svg)](https://github.com/huggingface/datasets-tagging/actions/workflows/deploy.yml)
+## ⚠️ This repo is now directly maintained in the Space repo at https://huggingface.co/spaces/huggingface/datasets-tagging ⚠️
+
+You can clone it from there with `git clone https://huggingface.co/spaces/huggingface/datasets-tagging`.
+
+You can open Pull requests & Discussions in the repo too: https://huggingface.co/spaces/huggingface/datasets-tagging/discussions.
+
 
 # 🤗 Datasets Tagging
 A Streamlit app to add structured tags to a dataset card.
